@@ -1,0 +1,28 @@
+import { create } from 'zustand';
+import { ensureSettings, updateSettings } from '@/db/queries';
+import { DEFAULT_FEE_RATE } from '@/utils/calculations';
+import type { Setting } from '@/db/schema';
+
+type SettingsState = {
+  isPro: boolean;
+  theme: Setting['theme'];
+  feeRate: number;
+  loaded: boolean;
+  load: () => void;
+  setFeeRate: (rate: number) => void;
+};
+
+export const useSettingsStore = create<SettingsState>((set) => ({
+  isPro: false,
+  theme: 'system',
+  feeRate: DEFAULT_FEE_RATE,
+  loaded: false,
+  load: () => {
+    const s = ensureSettings();
+    set({ isPro: s.isPro, theme: s.theme, feeRate: s.feeRate, loaded: true });
+  },
+  setFeeRate: (rate) => {
+    updateSettings({ feeRate: rate });
+    set({ feeRate: rate });
+  },
+}));

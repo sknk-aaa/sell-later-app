@@ -1,78 +1,101 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Icon, type IconName } from './Icon';
-import { PhotoSlot } from './PhotoSlot';
-import { colors, numFont, type StatusKind } from '@/theme/tokens';
+import { ImageField } from './ImageField';
+import { PickerSheet } from './PickerSheet';
+import { CATEGORIES } from '@/constants/categories';
+import { CONDITIONS, CONDITION_LABEL } from '@/constants/conditions';
 import { STATUS } from '@/theme/status';
+import { colors, numFont, type StatusKind } from '@/theme/tokens';
+import type { ItemCondition } from '@/db/schema';
+import type { ItemInput, PhotoValue } from '@/stores/useItemStore';
+import { useSettingsStore } from '@/stores/useSettingsStore';
+import { expectedProfit, feeAmount, profitRate } from '@/utils/calculations';
 import { yen } from '@/utils/format';
 
-// Add.jsx のフォームを移植。Add / Edit 画面で共用。
-export type ProductFormValues = {
-  name: string;
-  category: string;
-  purchasePrice: number;
-  sellPrice: number;
-  shipping: number;
-  condition: string;
-  status: StatusKind;
-  place: string;
-  photos: number;
+export type ProductFormHandle = {
+  getSubmission: () => { values: ItemInput; photo: PhotoValue } | null;
 };
 
-const DEFAULTS: ProductFormValues = {
-  name: 'AirPods Pro 第2世代',
-  category: '家電',
-  purchasePrice: 0,
-  sellPrice: 24800,
-  shipping: 1000,
-  condition: '新品未使用',
-  status: 'prep',
-  place: 'リビング棚',
-  photos: 3,
+type Props = {
+  initial?: Partial<ItemInput>;
+  initialPhoto?: PhotoValue;
+  onValidityChange?: (valid: boolean) => void;
 };
 
-export function ProductForm({ initial }: { initial?: Partial<ProductFormValues> }) {
-  const v = { ...DEFAULTS, ...initial };
-  const [name, setName] = React.useState(v.name);
+const onlyDigits = (s: string) => s.replace(/[^0-9]/g, '');
+const toNum = (s: string) => Number(onlyDigits(s) || '0');
 
-  const fee = Math.round(v.sellPrice * 0.1);
-  const profit = v.sellPrice - fee - v.shipping;
-  const profitRate = ((profit / v.sellPrice) * 100).toFixed(1);
+export const ProductForm = React.forwardRef<ProductFormHandle, Props>(function ProductForm(
+  { initial, initialPhoto, onValidityChange },
+  ref,
+) {
+  const feeRate = useSettingsStore((s) => s.feeRate);
+
+  const [name, setName] = React.useState(initial?.name ?? '');
+  const [category, setCategory] = React.useState(initial?.category ?? '');
+  const [purchasePrice, setPurchasePrice] = React.useState(
+    initial?.purchasePrice != null ? String(initial.purchasePrice) : '',
+  );
+  const [sellPrice, setSellPrice] = React.useState(
+    initial?.expectedPrice != null ? String(initial.expectedPrice) : '',
+  );
+  const [shipping, setShipping] = React.useState(
+    initial?.shippingFee != null ? String(initial.shippingFee) : '0',
+  );
+  const [condition, setCondition] = React.useState<ItemCondition>(initial?.condition ?? 'new');
+  const [status, setStatus] = React.useState<StatusKind>(initial?.status ?? 'stored');
+  const [location, setLocation] = React.useState(initial?.location ?? '');
+  const [memo, setMemo] = React.useState(initial?.memo ?? '');
+  const [photo, setPhoto] = React.useState<PhotoValue>(initialPhoto ?? { kind: 'none' });
+  const [picker, setPicker] = React.useState<null | 'category' | 'condition' | 'status'>(null);
+
+  const sellNum = toNum(sellPrice);
+  const shipNum = toNum(shipping);
+  const fee = feeAmount(sellNum, feeRate);
+  const profit = expectedProfit(sellNum, feeRate, shipNum);
+  const rate = profitRate(sellNum, profit);
+
+  const valid = name.trim().length > 0 && category.length > 0 && sellNum > 0;
+
+  React.useEffect(() => {
+    onValidityChange?.(valid);
+  }, [valid, onValidityChange]);
+
+  React.useImperativeHandle(ref, () => ({
+    getSubmission: () => {
+      if (!valid) return null;
+      const values: ItemInput = {
+        name: name.trim(),
+        category,
+        purchasePrice: purchasePrice.trim() ? toNum(purchasePrice) : null,
+        expectedPrice: sellNum,
+        shippingFee: shipNum,
+        location: location.trim() || null,
+        condition,
+        status,
+        memo: memo.trim() || null,
+      };
+      return { values, photo };
+    },
+  }));
 
   return (
     <View>
-      {/* 写真 */}
-      <View style={styles.photoSection}>
-        <View style={styles.photoHead}>
-          <View style={styles.photoHeadLeft}>
-            <Text style={styles.sectionLabel}>写真</Text>
-            <Text style={styles.hintInline}>(最大10枚)</Text>
-            <RequiredBadge />
-          </View>
-          <Pressable hitSlop={8}><Text style={styles.linkSm}>並び替え</Text></Pressable>
-        </View>
-        <View style={styles.photoGrid}>
-          {[1, 2, 3].map((i) => (
-            <View key={i} style={styles.photoCell}>
-              <PhotoSlot label={`photo${i}`} ratio={1} radius={10} />
-              <View style={styles.photoClose}>
-                <Icon name="closeCircle" size={22} />
-              </View>
-            </View>
-          ))}
-          <Pressable style={styles.addPhoto}>
-            <View style={styles.addPhotoCircle}><Icon name="plus" size={18} color="#fff" /></View>
-            <Text style={styles.addPhotoText}>追加</Text>
-          </Pressable>
-        </View>
-        <Text style={styles.hint}>長押しで並び替えができます</Text>
-      </View>
+      <ImageField photo={photo} onChange={setPhoto} />
 
       {/* 商品名 */}
       <View style={styles.field}>
         <FieldLabel label="商品名" required />
         <View style={styles.inputBox}>
-          <TextInput value={name} onChangeText={setName} style={styles.input} />
+          <TextInput
+            value={name}
+            onChangeText={setName}
+            maxLength={100}
+            placeholder="商品名を入力"
+            placeholderTextColor={colors.ink4}
+            style={styles.input}
+          />
           <Text style={styles.counter}>{name.length}/100</Text>
         </View>
       </View>
@@ -80,9 +103,11 @@ export function ProductForm({ initial }: { initial?: Partial<ProductFormValues> 
       {/* カテゴリ */}
       <View style={styles.field}>
         <FieldLabel label="カテゴリ" required />
-        <Pressable style={styles.selectBox}>
+        <Pressable style={styles.selectBox} onPress={() => setPicker('category')}>
           <View style={styles.selectIcon}><Icon name="tag" size={16} color={colors.primary} /></View>
-          <Text style={styles.selectText}>{v.category}</Text>
+          <Text style={[styles.selectText, !category && styles.placeholder]}>
+            {category || '選択してください'}
+          </Text>
           <Icon name="chevR" size={16} color={colors.ink4} />
         </Pressable>
       </View>
@@ -92,15 +117,15 @@ export function ProductForm({ initial }: { initial?: Partial<ProductFormValues> 
         <Text style={styles.sectionTitle}>価格情報</Text>
         <View style={styles.priceBox}>
           <View style={styles.priceRow}>
-            <PriceField label="購入価格" help value={yen(v.purchasePrice)} />
-            <PriceField label="見込み売却価格" required value={yen(v.sellPrice)} />
-            <PriceField label="送料" required value={yen(v.shipping)} />
+            <PriceInput label="購入価格" help value={purchasePrice} onChange={setPurchasePrice} />
+            <PriceInput label="見込み売却価格" required value={sellPrice} onChange={setSellPrice} />
+            <PriceInput label="送料" required value={shipping} onChange={setShipping} />
           </View>
           <View style={styles.priceDivider} />
           <View style={styles.priceRow}>
             <DerivedField label="メルカリ手数料 (10%)" value={`-${yen(fee)}`} />
             <DerivedField label="見込み利益" help value={yen(profit)} profit />
-            <DerivedField label="利益率" help value={`${profitRate}%`} />
+            <DerivedField label="利益率" help value={`${rate.toFixed(1)}%`} />
           </View>
         </View>
       </View>
@@ -109,25 +134,84 @@ export function ProductForm({ initial }: { initial?: Partial<ProductFormValues> 
       <View style={styles.fieldLg}>
         <Text style={styles.sectionTitle}>商品の詳細</Text>
         <View style={styles.listCard}>
-          <DetailRow icon="star" label="状態" required value={<Text style={styles.rowValue}>{v.condition}</Text>} />
-          <DetailRow
-            icon="flag"
-            label="ステータス"
-            required
-            value={
-              <View style={styles.statusValue}>
-                <View style={[styles.dot, { backgroundColor: STATUS[v.status].dotColor }]} />
-                <Text style={styles.rowValue}>{STATUS[v.status].label}</Text>
-              </View>
-            }
-          />
-          <DetailRow icon="calendar" label="保管場所" value={<Text style={styles.rowValue}>{v.place}</Text>} />
-          <DetailRow icon="note" label="メモ" value={<Text style={styles.placeholder}>任意（自由に入力できます）</Text>} isLast />
+          <Pressable style={[styles.detailRow, styles.detailRowBorder]} onPress={() => setPicker('condition')}>
+            <View style={styles.detailIcon}><Icon name="star" size={15} color={colors.primary} /></View>
+            <Text style={styles.detailLabel}>状態</Text>
+            <RequiredBadge small />
+            <Text style={styles.rowValue}>{CONDITION_LABEL[condition]}</Text>
+            <Icon name="chevR" size={14} color={colors.ink4} />
+          </Pressable>
+
+          <Pressable style={[styles.detailRow, styles.detailRowBorder]} onPress={() => setPicker('status')}>
+            <View style={styles.detailIcon}><Icon name="flag" size={15} color={colors.primary} /></View>
+            <Text style={styles.detailLabel}>ステータス</Text>
+            <RequiredBadge small />
+            <View style={styles.statusValue}>
+              <View style={[styles.dot, { backgroundColor: STATUS[status].dotColor }]} />
+              <Text style={styles.rowValue}>{STATUS[status].label}</Text>
+            </View>
+            <Icon name="chevR" size={14} color={colors.ink4} />
+          </Pressable>
+
+          <View style={styles.detailRow}>
+            <View style={styles.detailIcon}><Icon name="calendar" size={15} color={colors.primary} /></View>
+            <Text style={styles.detailLabel}>保管場所</Text>
+            <TextInput
+              value={location}
+              onChangeText={setLocation}
+              placeholder="任意"
+              placeholderTextColor={colors.ink4}
+              style={styles.inlineInput}
+            />
+          </View>
         </View>
       </View>
+
+      {/* メモ */}
+      <View style={styles.fieldLg}>
+        <FieldLabel label="メモ" />
+        <View style={styles.memoBox}>
+          <TextInput
+            value={memo}
+            onChangeText={setMemo}
+            placeholder="任意（自由に入力できます）"
+            placeholderTextColor={colors.ink4}
+            multiline
+            style={styles.memoInput}
+          />
+        </View>
+      </View>
+
+      <PickerSheet
+        visible={picker === 'category'}
+        title="カテゴリを選択"
+        options={CATEGORIES.map((c) => ({ key: c, label: c }))}
+        selectedKey={category}
+        onSelect={(k) => setCategory(k)}
+        onClose={() => setPicker(null)}
+      />
+      <PickerSheet
+        visible={picker === 'condition'}
+        title="状態を選択"
+        options={CONDITIONS.map((c) => ({ key: c.key, label: c.label }))}
+        selectedKey={condition}
+        onSelect={(k) => setCondition(k as ItemCondition)}
+        onClose={() => setPicker(null)}
+      />
+      <PickerSheet
+        visible={picker === 'status'}
+        title="ステータスを選択"
+        options={(['stored', 'prep', 'listed', 'sold', 'hold'] as StatusKind[]).map((k) => ({
+          key: k,
+          label: STATUS[k].label,
+        }))}
+        selectedKey={status}
+        onSelect={(k) => setStatus(k as StatusKind)}
+        onClose={() => setPicker(null)}
+      />
     </View>
   );
-}
+});
 
 function RequiredBadge({ small }: { small?: boolean }) {
   return (
@@ -146,7 +230,11 @@ function FieldLabel({ label, required }: { label: string; required?: boolean }) 
   );
 }
 
-function PriceField({ label, value, required, help }: { label: string; value: string; required?: boolean; help?: boolean }) {
+function PriceInput({
+  label, value, onChange, required, help,
+}: {
+  label: string; value: string; onChange: (t: string) => void; required?: boolean; help?: boolean;
+}) {
   return (
     <View style={{ flex: 1 }}>
       <View style={styles.priceLabelRow}>
@@ -155,7 +243,15 @@ function PriceField({ label, value, required, help }: { label: string; value: st
         {required && <RequiredBadge small />}
       </View>
       <View style={styles.priceValueBox}>
-        <Text style={styles.priceValue}>{value}</Text>
+        <Text style={styles.yenMark}>¥</Text>
+        <TextInput
+          value={value}
+          onChangeText={(t) => onChange(t.replace(/[^0-9]/g, ''))}
+          keyboardType="number-pad"
+          placeholder="0"
+          placeholderTextColor={colors.ink4}
+          style={styles.priceInput}
+        />
       </View>
     </View>
   );
@@ -173,33 +269,7 @@ function DerivedField({ label, value, profit, help }: { label: string; value: st
   );
 }
 
-function DetailRow({ icon, label, value, required, isLast }: { icon: IconName; label: string; value: React.ReactNode; required?: boolean; isLast?: boolean }) {
-  return (
-    <View style={[styles.detailRow, !isLast && styles.detailRowBorder]}>
-      <View style={styles.detailIcon}><Icon name={icon} size={15} color={colors.primary} /></View>
-      <Text style={styles.detailLabel}>{label}</Text>
-      {required && <RequiredBadge small />}
-      {value}
-      <Icon name="chevR" size={14} color={colors.ink4} />
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
-  photoSection: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8 },
-  photoHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
-  photoHeadLeft: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  sectionLabel: { fontSize: 15, fontWeight: '700', color: colors.ink1 },
-  hintInline: { fontSize: 12, color: colors.ink3 },
-  linkSm: { fontSize: 13, color: colors.primary },
-  photoGrid: { flexDirection: 'row', gap: 10 },
-  photoCell: { flex: 1, position: 'relative' },
-  photoClose: { position: 'absolute', top: 4, right: 4, width: 22, height: 22 },
-  addPhoto: { flex: 1, aspectRatio: 1, borderRadius: 10, borderWidth: 1.5, borderColor: colors.border, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center', gap: 4 },
-  addPhotoCircle: { width: 28, height: 28, borderRadius: 99, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
-  addPhotoText: { fontSize: 12, fontWeight: '500', color: colors.primary },
-  hint: { fontSize: 11, color: colors.ink3, marginTop: 6 },
-
   field: { paddingHorizontal: 16, paddingTop: 14 },
   fieldLg: { paddingHorizontal: 16, paddingTop: 20 },
   fieldLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 },
@@ -212,6 +282,7 @@ const styles = StyleSheet.create({
   selectBox: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 10, paddingVertical: 10, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', gap: 10 },
   selectIcon: { width: 28, height: 28, borderRadius: 8, backgroundColor: colors.primarySoft, alignItems: 'center', justifyContent: 'center' },
   selectText: { flex: 1, fontSize: 15, color: colors.ink1 },
+  placeholder: { color: colors.ink4 },
 
   sectionTitle: { fontSize: 15, fontWeight: '700', color: colors.ink1, marginBottom: 10 },
   priceBox: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 12, padding: 14 },
@@ -219,8 +290,9 @@ const styles = StyleSheet.create({
   priceDivider: { height: 1, backgroundColor: colors.divider, marginVertical: 14, marginHorizontal: -14 },
   priceLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 6 },
   priceLabel: { flex: 1, fontSize: 10, color: colors.ink3 },
-  priceValueBox: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 8, paddingVertical: 8, paddingHorizontal: 10 },
-  priceValue: { fontSize: 15, fontWeight: '600', color: colors.ink1, ...numFont },
+  priceValueBox: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 8, paddingVertical: 8, paddingHorizontal: 10, flexDirection: 'row', alignItems: 'center', gap: 2 },
+  yenMark: { fontSize: 14, fontWeight: '600', color: colors.ink1, ...numFont },
+  priceInput: { flex: 1, fontSize: 15, fontWeight: '600', color: colors.ink1, padding: 0, ...numFont },
 
   derivedLabelRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, marginBottom: 6 },
   derivedLabel: { fontSize: 11, color: colors.ink3 },
@@ -232,9 +304,12 @@ const styles = StyleSheet.create({
   detailIcon: { width: 28, height: 28, borderRadius: 8, backgroundColor: colors.primarySoft, alignItems: 'center', justifyContent: 'center' },
   detailLabel: { flex: 1, fontSize: 15, color: colors.ink1 },
   rowValue: { fontSize: 14, color: colors.ink1 },
-  placeholder: { fontSize: 14, color: colors.ink3 },
+  inlineInput: { fontSize: 14, color: colors.ink1, textAlign: 'right', minWidth: 120, padding: 0 },
   statusValue: { flexDirection: 'row', alignItems: 'center' },
   dot: { width: 8, height: 8, borderRadius: 99, marginRight: 6 },
+
+  memoBox: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 10, paddingVertical: 12, paddingHorizontal: 14 },
+  memoInput: { fontSize: 15, color: colors.ink1, minHeight: 72, padding: 0, textAlignVertical: 'top' },
 
   reqBadge: { height: 18, paddingHorizontal: 6, borderRadius: 4, backgroundColor: '#FF6B6B', alignItems: 'center', justifyContent: 'center' },
   reqBadgeSm: { height: 16 },

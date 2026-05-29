@@ -1,23 +1,22 @@
 import React from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Icon, type IconName } from '@/components/Icon';
 import { StatusBadge } from '@/components/StatusBadge';
 import { PhotoSlot } from '@/components/PhotoSlot';
 import { LargeTitleHeader } from '@/components/headers';
-import { PRODUCTS, type DemoProduct } from '@/constants/demoData';
+import { useItemStore } from '@/stores/useItemStore';
+import { useItemViewModels, type ItemVM } from '@/stores/selectors';
 import { colors, numFont, shadowCard } from '@/theme/tokens';
-import { yen } from '@/utils/format';
+import { formatDate, yen } from '@/utils/format';
 
 type View2 = 'grid' | 'list';
 
 export default function ListScreen() {
   const router = useRouter();
+  const items = useItemViewModels();
+  const toggleFavorite = useItemStore((s) => s.toggleFavorite);
   const [view, setView] = React.useState<View2>('grid');
-  const [stars, setStars] = React.useState<Record<string, boolean>>(() =>
-    Object.fromEntries(PRODUCTS.map((p) => [p.id, p.star])),
-  );
-  const toggleStar = (id: string) => setStars((s) => ({ ...s, [id]: !s[id] }));
   const open = (id: string) => router.push(`/item/${id}`);
 
   return (
@@ -43,7 +42,7 @@ export default function ListScreen() {
           <ToggleBtn active={view === 'list'} onPress={() => setView('list')} icon="rows" label="リスト" />
         </View>
 
-        {/* Filter selects */}
+        {/* Filter selects (STEP3で機能化) */}
         <View style={styles.selects}>
           <Select label="並び替え" value="登録日が新しい順" />
           <Select label="カテゴリ" value="すべて" />
@@ -53,27 +52,24 @@ export default function ListScreen() {
 
         {/* Count row */}
         <View style={styles.countRow}>
-          <Text style={styles.countText}>全 28 件</Text>
+          <Text style={styles.countText}>全 {items.length} 件</Text>
           <Text style={styles.multiSelect}>長押しで複数選択</Text>
         </View>
 
-        {view === 'grid' ? (
+        {items.length === 0 ? (
+          <View style={styles.emptyCard}>
+            <Text style={styles.emptyText}>まだ商品がありません。{'\n'}下の「追加」から登録できます。</Text>
+          </View>
+        ) : view === 'grid' ? (
           <View style={styles.grid}>
-            {PRODUCTS.map((p) => (
-              <GridCard key={p.id} p={p} star={stars[p.id]} onStar={() => toggleStar(p.id)} onPress={() => open(p.id)} />
+            {items.map((p) => (
+              <GridCard key={p.id} p={p} onStar={() => toggleFavorite(p.id)} onPress={() => open(p.id)} />
             ))}
           </View>
         ) : (
           <View style={styles.listCard}>
-            {PRODUCTS.map((p, i) => (
-              <ListRowCard
-                key={p.id}
-                p={p}
-                star={stars[p.id]}
-                onStar={() => toggleStar(p.id)}
-                onPress={() => open(p.id)}
-                isLast={i === PRODUCTS.length - 1}
-              />
+            {items.map((p, i) => (
+              <ListRowCard key={p.id} p={p} onStar={() => toggleFavorite(p.id)} onPress={() => open(p.id)} isLast={i === items.length - 1} />
             ))}
           </View>
         )}
@@ -109,50 +105,58 @@ function Select({ label, value }: { label: string; value: string }) {
   );
 }
 
-function GridCard({ p, star, onStar, onPress }: { p: DemoProduct; star: boolean; onStar: () => void; onPress: () => void }) {
+function GridCard({ p, onStar, onPress }: { p: ItemVM; onStar: () => void; onPress: () => void }) {
   return (
     <Pressable style={styles.gridCard} onPress={onPress}>
       <View>
-        <PhotoSlot label={p.name.split(' ')[0]} ratio={1} radius={0} />
+        {p.imagePath ? (
+          <Image source={{ uri: p.imagePath }} style={styles.gridImage} />
+        ) : (
+          <PhotoSlot label={p.name.split(' ')[0]} ratio={1} radius={0} />
+        )}
         <View style={styles.gridBadge}><StatusBadge kind={p.status} /></View>
         <Pressable style={styles.starBtn} onPress={onStar} hitSlop={6}>
-          <Icon name={star ? 'starFill' : 'star'} size={16} color={star ? undefined : colors.ink3} />
+          <Icon name={p.isFavorite ? 'starFill' : 'star'} size={16} color={p.isFavorite ? undefined : colors.ink3} />
         </Pressable>
       </View>
       <View style={styles.gridBody}>
         <Text style={styles.gridName} numberOfLines={2}>{p.name}</Text>
         <View style={styles.priceRow}>
-          <Text style={styles.gridPrice}>{yen(p.price)}</Text>
-          <Text style={styles.profitInline}>利益 <Text style={styles.profitInlineNum}>{yen(p.profit)}</Text></Text>
+          <Text style={styles.gridPrice}>{yen(p.expectedPrice)}</Text>
+          <Text style={styles.profitInline}>利益 <Text style={styles.profitInlineNum}>{yen(p.expectedProfit)}</Text></Text>
         </View>
         <View style={styles.metaRow}>
-          <View style={styles.metaItem}><Icon name="folder" size={12} color={colors.ink3} /><Text style={styles.metaText}>{p.place}</Text></View>
-          <View style={styles.metaItem}><Icon name="calendar" size={12} color={colors.ink3} /><Text style={styles.metaText}>{p.date}</Text></View>
+          <View style={styles.metaItem}><Icon name="folder" size={12} color={colors.ink3} /><Text style={styles.metaText} numberOfLines={1}>{p.location || '-'}</Text></View>
+          <View style={styles.metaItem}><Icon name="calendar" size={12} color={colors.ink3} /><Text style={styles.metaText}>{formatDate(p.createdAt)}</Text></View>
         </View>
       </View>
     </Pressable>
   );
 }
 
-function ListRowCard({ p, star, onStar, onPress, isLast }: { p: DemoProduct; star: boolean; onStar: () => void; onPress: () => void; isLast: boolean }) {
+function ListRowCard({ p, onStar, onPress, isLast }: { p: ItemVM; onStar: () => void; onPress: () => void; isLast: boolean }) {
   return (
     <Pressable style={[styles.listRow, !isLast && styles.listRowBorder]} onPress={onPress}>
-      <PhotoSlot label={p.name.split(' ')[0]} radius={10} style={styles.listPhoto} />
+      {p.imagePath ? (
+        <Image source={{ uri: p.imagePath }} style={styles.listPhoto} />
+      ) : (
+        <PhotoSlot label={p.name.split(' ')[0]} radius={10} style={styles.listPhoto} />
+      )}
       <View style={{ flex: 1 }}>
         <View style={styles.listTop}>
           <StatusBadge kind={p.status} />
           <Pressable onPress={onStar} hitSlop={6}>
-            <Icon name={star ? 'starFill' : 'star'} size={18} color={star ? undefined : colors.ink4} />
+            <Icon name={p.isFavorite ? 'starFill' : 'star'} size={18} color={p.isFavorite ? undefined : colors.ink4} />
           </Pressable>
         </View>
         <Text style={styles.listName} numberOfLines={1}>{p.name}</Text>
         <View style={[styles.priceRow, { marginTop: 2 }]}>
-          <Text style={styles.listPrice}>{yen(p.price)}</Text>
-          <Text style={styles.profitInline}>利益 <Text style={styles.profitInlineNum}>{yen(p.profit)}</Text></Text>
+          <Text style={styles.listPrice}>{yen(p.expectedPrice)}</Text>
+          <Text style={styles.profitInline}>利益 <Text style={styles.profitInlineNum}>{yen(p.expectedProfit)}</Text></Text>
         </View>
         <View style={[styles.metaRow, { marginTop: 4 }]}>
-          <View style={styles.metaItem}><Icon name="folder" size={12} color={colors.ink3} /><Text style={styles.metaText}>{p.place}</Text></View>
-          <View style={styles.metaItem}><Icon name="calendar" size={12} color={colors.ink3} /><Text style={styles.metaText}>{p.date}</Text></View>
+          <View style={styles.metaItem}><Icon name="folder" size={12} color={colors.ink3} /><Text style={styles.metaText} numberOfLines={1}>{p.location || '-'}</Text></View>
+          <View style={styles.metaItem}><Icon name="calendar" size={12} color={colors.ink3} /><Text style={styles.metaText}>{formatDate(p.createdAt)}</Text></View>
         </View>
       </View>
     </Pressable>
@@ -164,15 +168,9 @@ const styles = StyleSheet.create({
   filterBtn: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   filterBtnText: { fontSize: 14, fontWeight: '500', color: colors.ink1 },
 
-  toggle: {
-    flexDirection: 'row', marginHorizontal: 16, marginTop: 4, marginBottom: 14,
-    padding: 4, backgroundColor: '#EEF0F4', borderRadius: 12,
-  },
+  toggle: { flexDirection: 'row', marginHorizontal: 16, marginTop: 4, marginBottom: 14, padding: 4, backgroundColor: '#EEF0F4', borderRadius: 12 },
   toggleBtn: { flex: 1, height: 36, borderRadius: 9, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 },
-  toggleBtnActive: {
-    backgroundColor: '#fff',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.08, shadowRadius: 3, elevation: 1,
-  },
+  toggleBtnActive: { backgroundColor: '#fff', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.08, shadowRadius: 3, elevation: 1 },
   toggleText: { fontSize: 14, fontWeight: '600' },
 
   selects: { flexDirection: 'row', paddingHorizontal: 16, gap: 8, marginBottom: 14 },
@@ -185,12 +183,16 @@ const styles = StyleSheet.create({
   countText: { fontSize: 13, color: colors.ink3 },
   multiSelect: { fontSize: 13, fontWeight: '500', color: colors.primary },
 
+  emptyCard: { marginHorizontal: 16, backgroundColor: colors.surface, borderRadius: 16, padding: 28, alignItems: 'center', ...shadowCard },
+  emptyText: { fontSize: 13, color: colors.ink3, textAlign: 'center', lineHeight: 20 },
+
   grid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 16, gap: 14 },
   gridCard: { width: '47%', flexGrow: 1, backgroundColor: colors.surface, borderRadius: 12, overflow: 'hidden', ...shadowCard },
+  gridImage: { width: '100%', aspectRatio: 1, backgroundColor: colors.bg2 },
   gridBadge: { position: 'absolute', top: 8, left: 8 },
   starBtn: {
-    position: 'absolute', top: 8, right: 8, width: 28, height: 28, borderRadius: 99,
-    backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center',
+    position: 'absolute', top: 8, right: 8, width: 28, height: 28, borderRadius: 99, backgroundColor: '#fff',
+    alignItems: 'center', justifyContent: 'center',
     shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.12, shadowRadius: 3, elevation: 2,
   },
   gridBody: { paddingHorizontal: 12, paddingTop: 10, paddingBottom: 12 },
@@ -200,14 +202,14 @@ const styles = StyleSheet.create({
   priceRow: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', marginTop: 6 },
   profitInline: { fontSize: 11, color: colors.ink3 },
   profitInlineNum: { fontSize: 12, color: colors.profit, fontWeight: '600', ...numFont },
-  metaRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 },
-  metaItem: { flexDirection: 'row', alignItems: 'center', gap: 3 },
+  metaRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 8, gap: 6 },
+  metaItem: { flexDirection: 'row', alignItems: 'center', gap: 3, flexShrink: 1 },
   metaText: { fontSize: 11, color: colors.ink3 },
 
   listCard: { marginHorizontal: 16, backgroundColor: colors.surface, borderRadius: 16, overflow: 'hidden', ...shadowCard },
   listRow: { flexDirection: 'row', gap: 12, padding: 12 },
   listRowBorder: { borderBottomWidth: 1, borderBottomColor: colors.divider },
-  listPhoto: { width: 82, height: 82 },
+  listPhoto: { width: 82, height: 82, borderRadius: 10, backgroundColor: colors.bg2 },
   listTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 },
   listName: { fontSize: 14, fontWeight: '600', color: colors.ink1, marginTop: 6, lineHeight: 19 },
   listPrice: { fontSize: 15, fontWeight: '700', color: colors.ink1, ...numFont },
