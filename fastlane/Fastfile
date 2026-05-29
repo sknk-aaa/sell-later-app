@@ -43,6 +43,7 @@ platform :ios do
       code_sign_identity: "Apple Distribution",
       profile_name: profile_name
     )
+    build_no = ENV["GITHUB_RUN_NUMBER"] || Time.now.to_i.to_s
     gym(
       workspace: workspace,
       scheme: scheme,
@@ -50,6 +51,7 @@ platform :ios do
       export_method: "app-store",
       output_directory: "build",
       output_name: "app.ipa",
+      xcargs: "CURRENT_PROJECT_VERSION=#{build_no}",
       export_options: {
         method: "app-store",
         signingStyle: "manual",
