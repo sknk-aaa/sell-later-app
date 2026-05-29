@@ -1,0 +1,28 @@
+name: iOS Certificates (one-time setup)
+
+# 初回だけ手動実行して、証明書/プロビジョニングプロファイルを生成し
+# match リポジトリへ保存する（Mac不要。Secrets設定後に1回 Run workflow）。
+on:
+  workflow_dispatch:
+
+jobs:
+  certs:
+    runs-on: macos-latest
+    timeout-minutes: 30
+    env:
+      APP_IDENTIFIER: com.selllater.app
+      MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
+      MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
+      MATCH_GIT_BASIC_AUTHORIZATION: ${{ secrets.MATCH_GIT_BASIC_AUTHORIZATION }}
+      APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+      APP_STORE_CONNECT_API_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_API_ISSUER_ID }}
+      APP_STORE_CONNECT_API_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY }}
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+          bundler-cache: true
+      - name: Create & store certificates
+        run: bundle exec fastlane ios certs

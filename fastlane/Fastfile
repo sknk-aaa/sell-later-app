@@ -17,6 +17,11 @@ platform :ios do
     Dir["ios/*.xcworkspace"].first or UI.user_error!("ios/*.xcworkspace が見つかりません。先に expo prebuild を実行してください")
   end
 
+  desc "証明書/プロファイルを作成しmatchリポジトリへ保存（初回セットアップ・1回だけ実行）"
+  lane :certs do
+    match(type: "appstore", readonly: false, api_key: asc_api_key)
+  end
+
   desc "証明書を取得し署名してIPAをビルド"
   lane :build do
     workspace = detect_workspace

@@ -34,14 +34,13 @@
    - `src/ads/AdBannerNative.tsx` の `BANNER_UNIT_ID`（現在 `TestIds.BANNER`）。
    - ※本番審査までは**テストIDのまま**にすること（自分の広告をクリックすると規約違反）。
 
-## 4. fastlane match（証明書管理）
-1. **空のプライベートGitリポジトリ**を別途作成（例 `youraccount/certificates`）。
-2. ローカル（Mac）で一度だけ:
-   ```
-   bundle install
-   MATCH_GIT_URL=<上記URL> bundle exec fastlane match appstore
-   ```
-   → App Store用の証明書/プロビジョニングプロファイルが暗号化されて保存される（パスフレーズ=`MATCH_PASSWORD`）。
+## 4. fastlane match（証明書管理）※Mac不要
+1. **空のプライベートGitリポジトリ**を別途作成（例 `youraccount/certificates`）→ そのURLが `MATCH_GIT_URL`。
+2. 証明書の暗号化パスフレーズを自分で決める → `MATCH_PASSWORD`。
+3. 上記＋ASC APIキー等の Secrets を**先に全部登録**（セクション6）。
+4. GitHub → Actions → **「iOS Certificates (one-time setup)」**ワークフローを **Run workflow** で1回だけ実行。
+   → macOSランナー上で `fastlane ios certs` が走り、証明書/プロビジョニングプロファイルを生成して match リポジトリへ保存する（**Mac不要**）。
+5. 以後の本番ビルドは `ios.yml` が `readonly` で取得して使う。
 
 ## 5. App Store Connect API Key
 App Store Connect → Users and Access → Integrations → API Keys で Key を発行:
