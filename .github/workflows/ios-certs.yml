@@ -30,6 +30,8 @@ jobs:
           echo "ASC_API_KEY_PATH=$RUNNER_TEMP/asc_api_key.p8" >> "$GITHUB_ENV"
           echo "--- restored key header (should be a PEM header) ---"
           head -1 "$RUNNER_TEMP/asc_api_key.p8"
+          echo "--- openssl validation ---"
+          if openssl pkey -in "$RUNNER_TEMP/asc_api_key.p8" -noout; then echo "KEY OK"; else echo "KEY INVALID"; fi
 
       - name: Create & store certificates
         run: bundle exec fastlane ios certs
