@@ -1,6 +1,11 @@
 default_platform(:ios)
 
 platform :ios do
+  # CI環境では一時キーチェーンを作成・解錠（login.keychainの署名UIダイアログによるハングを防ぐ）
+  before_all do
+    setup_ci if ENV["CI"]
+  end
+
   # App Store Connect API Key（ワークフローが復元した .p8 のパスを渡す）
   def asc_api_key
     app_store_connect_api_key(
