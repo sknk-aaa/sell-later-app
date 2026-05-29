@@ -8,7 +8,7 @@
 ## 2. 技術スタックと**固定バージョン（重要）**
 - Expo **SDK 54**（expo ~54.0.35 / expo-router 6 / react-native 0.81.5 / react 19.1.0）/ TypeScript ~5.9.2
 - expo-sqlite + **Drizzle ORM** / Zustand / expo-file-system(新File/Directory/Paths API) / expo-image-picker / react-native-svg / @react-native-community/datetimepicker
-- STEP4追加: **react-native-iap**(課金) / **react-native-google-mobile-ads**(広告) / expo-splash-screen。これらはネイティブ依存で**Expo Goに無い** → `src/utils/env.ts` の `isExpoGo` で**Expo Go時はno-op化**して起動を維持（実動作はdev build/TestFlight）。
+- STEP4追加: **react-native-purchases(RevenueCat)**(課金) / **react-native-google-mobile-ads**(広告) / expo-splash-screen。これらはネイティブ依存で**Expo Goに無い** → `src/utils/env.ts` の `isExpoGo` で**Expo Go時はno-op化**して起動を維持（実動作はdev build/TestFlight）。
 - **⚠️ Expo SDK を勝手に上げない**。開発確認に使う端末の **Expo Go が 54.0.2（SDK54まで）** のため。最初56で組んでGoに弾かれ、56→55→54 と下げて一致させた経緯あり。SDK更新時は必ず端末のExpo Go対応SDKを先に確認する。
 
 ## 3. 起動・確認方法
@@ -61,7 +61,7 @@ types/sql.d.ts             .sql inline-import 用の型宣言
 - **ビルド/配信は GitHub Actions(macOS) + fastlane（prebuild方式・EAS非依存）**。STEP4で実装。Expo Go はあくまで開発確認用で、STEP4で native依存(iap/admob)が入ると dev client に移行する。
 
 ## 9. STEP4（実装済みコード）
-- 課金: `src/purchases/`（products.ts のSKU、PurchaseProvider が `useIAP` で購入/復元、isProをsettingsへ反映。Expo Goでは no-op）。買い切り¥1,500=`com.selllater.app.pro.lifetime` / 月額¥500=`com.selllater.app.pro.monthly`。
+- 課金: **RevenueCat**（`src/purchases/`：config.ts のAPIキー/エンタイトルメント`pro`、PurchaseProvider が `react-native-purchases` で offerings取得/購入/復元、entitlement→isProをsettingsへ反映。Expo Goでは no-op）。製品: 買い切り¥1,500=`com.selllater.app.pro.lifetime` / 月額¥500=`com.selllater.app.pro.monthly`。iOSキーは `EXPO_PUBLIC_REVENUECAT_IOS_KEY`。
 - Pro制限: `src/utils/limits.ts`。21件超で `/paywall`（[TabBar](../src/components/TabBar.tsx)・[list](../src/app/(tabs)/list.tsx)）、写真2枚目ロック（[ImageField](../src/components/ImageField.tsx)）、分析ロック（[analytics](../src/app/(tabs)/analytics.tsx)）。ペイウォール=[paywall.tsx](../src/app/paywall.tsx)。
 - 写真複数枚: 無料1/Pro10（ProductForm/ImageField/useItemStore/selectors/詳細カルーセル）。
 - 広告: `src/ads/`＋[AdBanner](../src/components/AdBanner.tsx)。無料&非Expo Goのみ、現状Googleテストユニット。home/list下部。

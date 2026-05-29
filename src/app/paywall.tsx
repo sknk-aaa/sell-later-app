@@ -6,7 +6,6 @@ import { Icon } from '@/components/Icon';
 import { ModalHeader } from '@/components/headers';
 import { Button } from '@/components/ui';
 import { usePurchases } from '@/purchases/PurchaseProvider';
-import { SKU_LIFETIME, SKU_MONTHLY } from '@/purchases/products';
 import { useSettingsStore } from '@/stores/useSettingsStore';
 import { colors } from '@/theme/tokens';
 
@@ -20,7 +19,7 @@ const BENEFITS = [
 export default function PaywallScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { available, loading, lifetime, monthly, buy, restore } = usePurchases();
+  const { available, loading, packages, buy, restore } = usePurchases();
   const isPro = useSettingsStore((s) => s.isPro);
 
   return (
@@ -50,21 +49,20 @@ export default function PaywallScreen() {
           </View>
         ) : !available ? (
           <Text style={styles.notice}>購入は実機ビルド（TestFlight等）でご利用いただけます。Expo Goでは購入できません。</Text>
+        ) : packages.length === 0 ? (
+          <Text style={styles.notice}>プランを読み込んでいます…</Text>
         ) : (
           <View style={{ marginTop: 20, gap: 10 }}>
-            <Button
-              label={`買い切り ${lifetime?.displayPrice ?? '¥1,500'}`}
-              variant="primary"
-              block
-              onPress={() => buy(SKU_LIFETIME)}
-            />
-            <Button
-              label={`月額 ${monthly?.displayPrice ?? '¥500'}`}
-              variant="outline"
-              block
-              textColor={colors.primary}
-              onPress={() => buy(SKU_MONTHLY)}
-            />
+            {packages.map((p, i) => (
+              <Button
+                key={p.id}
+                label={`${p.title} ${p.priceString}`}
+                variant={i === 0 ? 'primary' : 'outline'}
+                block
+                textColor={i === 0 ? undefined : colors.primary}
+                onPress={() => buy(p.pkg)}
+              />
+            ))}
             <Pressable style={styles.restore} onPress={restore} disabled={loading}>
               <Text style={styles.restoreText}>購入を復元</Text>
             </Pressable>

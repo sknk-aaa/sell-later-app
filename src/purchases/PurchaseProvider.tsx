@@ -1,17 +1,22 @@
 import React from 'react';
-import { useIAP } from 'react-native-iap';
+import Purchases, { type CustomerInfo, type PurchasesPackage } from 'react-native-purchases';
 import { isExpoGo } from '@/utils/env';
 import { useSettingsStore } from '@/stores/useSettingsStore';
-import { PRO_SKUS, SKU_LIFETIME, SKU_MONTHLY } from './products';
+import { ENTITLEMENT_PRO, REVENUECAT_IOS_API_KEY } from './config';
 
-export type PlanProduct = { id: string; title: string; displayPrice: string };
+export type PlanPackage = {
+  id: string;
+  productId: string;
+  title: string;
+  priceString: string;
+  pkg: PurchasesPackage;
+};
 
 type PurchaseContextValue = {
-  available: boolean; // 課金機能が使えるか（Expo Goでは false）
+  available: boolean; // 課金が使えるか（Expo Goでは false）
   loading: boolean;
-  lifetime?: PlanProduct;
-  monthly?: PlanProduct;
-  buy: (sku: string) => Promise<void>;
+  packages: PlanPackage[];
+  buy: (pkg: PurchasesPackage) => Promise<void>;
   restore: () => Promise<void>;
 };
 
@@ -19,6 +24,7 @@ const noop = async () => {};
 const PurchaseContext = React.createContext<PurchaseContextValue>({
   available: false,
   loading: false,
+  packages: [],
   buy: noop,
   restore: noop,
 });
@@ -26,83 +32,83 @@ const PurchaseContext = React.createContext<PurchaseContextValue>({
 export const usePurchases = () => React.useContext(PurchaseContext);
 
 export function PurchaseProvider({ children }: { children: React.ReactNode }) {
-  // Expo Go ではネイティブ課金が無いため no-op プロバイダ
   if (isExpoGo) {
-    return <PurchaseContext.Provider value={{ available: false, loading: false, buy: noop, restore: noop }}>{children}</PurchaseContext.Provider>;
+    return (
+      <PurchaseContext.Provider value={{ available: false, loading: false, packages: [], buy: noop, restore: noop }}>
+        {children}
+      </PurchaseContext.Provider>
+    );
   }
   return <NativePurchaseProvider>{children}</NativePurchaseProvider>;
 }
 
+const hasPro = (info: CustomerInfo) => info.entitlements.active[ENTITLEMENT_PRO] !== undefined;
+
 function NativePurchaseProvider({ children }: { children: React.ReactNode }) {
   const setPro = useSettingsStore((s) => s.setPro);
-  const {
-    connected,
-    products,
-    subscriptions,
-    availablePurchases,
-    activeSubscriptions,
-    fetchProducts,
-    getAvailablePurchases,
-    requestPurchase,
-    finishTransaction,
-  } = useIAP({
-    onPurchaseSuccess: async (purchase) => {
-      try {
-        await finishTransaction({ purchase, isConsumable: false });
-      } catch {
-        // 失敗時も次回起動で再処理される
-      }
-      setPro(true);
-    },
-  });
+  const [packages, setPackages] = React.useState<PlanPackage[]>([]);
   const [loading, setLoading] = React.useState(false);
 
   React.useEffect(() => {
-    if (!connected) return;
-    void fetchProducts({ skus: [SKU_LIFETIME], type: 'in-app' });
-    void fetchProducts({ skus: [SKU_MONTHLY], type: 'subs' });
-    void getAvailablePurchases();
-  }, [connected, fetchProducts, getAvailablePurchases]);
+    let mounted = true;
+    const apply = (info: CustomerInfo) => setPro(hasPro(info));
+    Purchases.configure({ apiKey: REVENUECAT_IOS_API_KEY });
+    Purchases.addCustomerInfoUpdateListener(apply);
 
-  // エンタイトルメント反映（買い切り所有 or サブスク有効）
-  React.useEffect(() => {
-    const owned = availablePurchases.some((p) => PRO_SKUS.includes(p.productId));
-    const subscribed = activeSubscriptions.length > 0;
-    setPro(owned || subscribed);
-  }, [availablePurchases, activeSubscriptions, setPro]);
+    (async () => {
+      try {
+        apply(await Purchases.getCustomerInfo());
+        const offerings = await Purchases.getOfferings();
+        const pkgs = offerings.current?.availablePackages ?? [];
+        if (mounted) {
+          setPackages(
+            pkgs.map((p) => ({
+              id: p.identifier,
+              productId: p.product.identifier,
+              title: p.product.title,
+              priceString: p.product.priceString,
+              pkg: p,
+            })),
+          );
+        }
+      } catch {
+        // オフライン等は無視（リスナーが後で更新）
+      }
+    })();
+
+    return () => {
+      mounted = false;
+      Purchases.removeCustomerInfoUpdateListener(apply);
+    };
+  }, [setPro]);
 
   const buy = React.useCallback(
-    async (sku: string) => {
+    async (pkg: PurchasesPackage) => {
       setLoading(true);
       try {
-        await requestPurchase({
-          request: { apple: { sku }, google: { skus: [sku] } },
-          type: sku === SKU_MONTHLY ? 'subs' : 'in-app',
-        });
+        const { customerInfo } = await Purchases.purchasePackage(pkg);
+        setPro(hasPro(customerInfo));
+      } catch {
+        // ユーザーキャンセル等は無視
       } finally {
         setLoading(false);
       }
     },
-    [requestPurchase],
+    [setPro],
   );
 
   const restore = React.useCallback(async () => {
     setLoading(true);
     try {
-      await getAvailablePurchases();
+      setPro(hasPro(await Purchases.restorePurchases()));
     } finally {
       setLoading(false);
     }
-  }, [getAvailablePurchases]);
+  }, [setPro]);
 
-  const value: PurchaseContextValue = {
-    available: true,
-    loading,
-    lifetime: products.find((p) => p.id === SKU_LIFETIME),
-    monthly: subscriptions.find((p) => p.id === SKU_MONTHLY),
-    buy,
-    restore,
-  };
-
-  return <PurchaseContext.Provider value={value}>{children}</PurchaseContext.Provider>;
+  return (
+    <PurchaseContext.Provider value={{ available: true, loading, packages, buy, restore }}>
+      {children}
+    </PurchaseContext.Provider>
+  );
 }

@@ -11,12 +11,20 @@
 2. App Store Connect で新規アプリを作成。bundle id は **`com.selllater.app`**（変更する場合は `app.json` の `ios.bundleIdentifier` と `fastlane/Appfile`・`src/purchases/products.ts` のSKU接頭辞・AdMob設定も合わせる）。
 3. `APPLE_TEAM_ID`（10桁）を控える。
 
-## 2. 課金（IAP）製品を作成
-App Store Connect → 該当アプリ → App内課金 / サブスクリプション:
+## 2. 課金（IAP）製品を作成（App Store Connect）
+※ 課金は **RevenueCat** 経由（`react-native-purchases`）。ただし製品自体は必ず ASC で作る。
 - 非消費型（買い切り）: 製品ID **`com.selllater.app.pro.lifetime`** / 価格 ¥1,500
 - 自動更新サブスク: サブスクグループ作成 → 製品ID **`com.selllater.app.pro.monthly`** / 価格 ¥500/月
-- 製品IDは `src/purchases/products.ts` と一致させること。
 - 審査用にサンドボックステスター（Users and Access → Sandbox）を作成し、実機でサインインしてテスト購入。
+- App Store Connect → Users and Access → Integrations → **In-App Purchase** キーを発行（RevenueCatに登録する）。
+
+## 2b. RevenueCat 設定
+1. [RevenueCat](https://www.revenuecat.com/) でアカウント作成 → Project 作成 → iOSアプリ追加（bundle id `com.selllater.app`）。
+2. App Store Connect の **In-App Purchase キー（.p8）** を RevenueCat に登録（レシート検証用）。
+3. **Products**: 上記2製品（lifetime / monthly）を RevenueCat に追加。
+4. **Entitlements**: 識別子 **`pro`** を作成し、両製品を割り当てる（`src/purchases/config.ts` の `ENTITLEMENT_PRO` と一致）。
+5. **Offerings**: `default` オファリングに2製品のパッケージを入れる（`current` として配信。アプリはこの current の availablePackages を表示）。
+6. **iOS公開SDKキー**（`appl_xxx`）をコピー → GitHub Secret `EXPO_PUBLIC_REVENUECAT_IOS_KEY` に登録（CIのJSバンドル時に注入される）。ローカルdev buildで試す場合は `.env` に `EXPO_PUBLIC_REVENUECAT_IOS_KEY=appl_xxx`。
 
 ## 3. AdMob
 1. AdMob アカウント作成 → iOSアプリを追加。
@@ -51,6 +59,7 @@ App Store Connect → Users and Access → Integrations → API Keys で Key を
 | `APP_STORE_CONNECT_API_KEY_ID` | API Key の Key ID |
 | `APP_STORE_CONNECT_API_ISSUER_ID` | Issuer ID |
 | `APP_STORE_CONNECT_API_KEY` | `.p8` を base64 化した文字列 |
+| `EXPO_PUBLIC_REVENUECAT_IOS_KEY` | RevenueCat の iOS公開SDKキー（`appl_xxx`） |
 
 ## 7. 配信
 - `main` に push、または `v1.0.0` のようなタグを作成すると `.github/workflows/ios.yml` が起動。

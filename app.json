@@ -33,7 +33,6 @@
         }
       ],
       "@react-native-community/datetimepicker",
-      "react-native-iap",
       [
         "react-native-google-mobile-ads",
         {
