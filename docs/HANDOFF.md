@@ -1,6 +1,6 @@
 # 開発引き継ぎメモ（sell-later-app）
 
-セッションが途切れても次の担当が再開できるよう、現状と要点をまとめる。最終更新時点で **STEP1〜4 のコード実装完了**（STEP1〜3は実機確認済み）。残りは **STEP4のユーザー作業**（Apple/AdMobアカウント・GitHub Secrets）→ [docs/RELEASE_SETUP.md](RELEASE_SETUP.md)。
+セッションが途切れても次の担当が再開できるよう、現状と要点をまとめる。最終更新時点で **STEP1〜4 のコード実装完了**（STEP1〜3は実機確認済み）。現在は **CIでのTestFlight初回配信をデバッグ中** → **最新状況は末尾「12. リリースCIの現在地」を最初に読む**こと。
 
 ## 1. アプリ概要
 「いつかメルカリで売る物」を管理するiOSアプリ。家にある売れる物を資産として見える化し、ホームで「全部売ったらいくらか」を示す。設計書は [docs/sellitlater_design_v1.md](sellitlater_design_v1.md)、実装指示は [docs/02_claude_code_instructions.md](02_claude_code_instructions.md)。UIは Claude Design プロトタイプを React Native へ忠実移植したもの。
@@ -71,5 +71,33 @@ types/sql.d.ts             .sql inline-import 用の型宣言
 
 ## 10. Git運用
 - 変更後は原則コミット（日本語メッセージ）、**push はユーザーが行う**。
-- 生成物・node_modules・秘密情報はコミットしない（`.gitignore` 済み、`/ios` `/android` も無視）。
-- これまでのコミット: STEP1 / STEP2 / SDK56→55 / SDK55→54 / STEP3。
+- 生成物・node_modules・秘密情報はコミットしない（`.gitignore` 済み、`/ios` `/android` `*.p8` も無視）。
+- リモート: `origin` = `https://github.com/sknk-aaa/sell-later-app.git`（main）。
+
+## 11. 完了済みのユーザー側セットアップ
+- Apple Developer: App ID `com.selllater.app` 登録、Sandboxテスター作成。App Store Connect でアプリ作成・IAP製品2つ（`...pro.lifetime`¥1,500 / `...pro.monthly`¥500）作成。
+- RevenueCat: プロジェクト`selllater`、App Storeアプリ追加、In-App Purchaseキー登録、製品→Entitlement `pro`→Offering `default(current)` 設定。iOS公開キー取得。
+- ASC API キー発行（fastlane/RevenueCat用）: ファイル `AuthKey_GSFCH87D9K.p8`、**Key ID `GSFCH87D9K`**。
+- GitHub Secrets（8つ）登録済み: `EXPO_PUBLIC_REVENUECAT_IOS_KEY` / `APPLE_TEAM_ID` / `MATCH_GIT_URL` / `MATCH_PASSWORD` / `MATCH_GIT_BASIC_AUTHORIZATION` / `APP_STORE_CONNECT_API_KEY_ID`(=GSFCH87D9K) / `APP_STORE_CONNECT_API_ISSUER_ID` / `APP_STORE_CONNECT_API_KEY`（= .p8の生PEM中身）。
+
+## 12. リリースCIの現在地（★次セッションはここから）
+GitHub Actions で初回TestFlight配信をデバッグ中。CIの通過順に潰してきた:
+1. ✅ workspace検出（アプリ名が日本語のためExpoがプロジェクト名を `app` に採用 → `ios/app.xcworkspace`。Fastfileは `__dir__` 基準の絶対パスで検出）。
+2. ✅ ASC APIキー読込（`invalid curve name`は解消。Secretは**生PEMの.p8中身**を入れる方式。ワークフローの「Prepare ASC API key」が `KEY OK` を確認）。
+3. ⛔ **現在の詰まり = match の証明書リポジトリ clone 失敗**。「iOS Certificates (one-time setup)」を実行すると **`GIT AUTH FAILED`**。
+
+**次の一手（やること）:**
+- まず未pushコミットがあるので **`git push`**（最新コミット `ci: match git検証を詳細化…`）。
+- GitHub → Actions → **「iOS Certificates (one-time setup)」→ Run workflow**（branch=main）を実行。
+- 「Verify match git access」ステップの3行を読む:
+  - `URL format:` … `MATCH_GIT_URL` が `https://github.com/sknk-aaa/certificates.git` 形式か（SSHや`.git`無しはNG）
+  - `BASIC_AUTH:` … `MATCH_GIT_BASIC_AUTHORIZATION` が `user:token` にデコードできるか（不正なら `echo -n "sknk-aaa:ghp_..." | base64 -w0` で作り直し）
+  - `--- git ls-remote ---` 下のエラー … `404/Repository not found`=certificatesリポジトリ未作成かURL違い、`401/403`=トークン権限不足（classic `repo` スコープ要、`certificates`にアクセスできること）
+- 上記で原因を直す（多くは①certificates空privateリポジトリ未作成、②BASIC_AUTHのbase64ミス、③トークン権限）。
+- `GIT AUTH OK` になれば「iOS Certificates」が証明書を生成・保存 → 次に **「iOS TestFlight」を再実行**（push or 失敗RunのRe-run）→ gym→pilotでTestFlight配信、が通る想定。
+
+**CI通過後の残タスク:**
+- AdMob本番ID差し替え（`app.json` の `react-native-google-mobile-ads` `iosAppId` と `src/ads/AdBannerNative.tsx` の `BANNER_UNIT_ID`。現状GoogleテストID）。
+- ストア掲載名の確定（App Store Connect入力。ホーム表示名は `app.json` の `name`）。
+- 本番アイコン/スプラッシュ差し替え（`assets/`）。
+- TestFlight実機で購入(サンドボックス)・広告・Pro制限・複数写真の最終確認。
