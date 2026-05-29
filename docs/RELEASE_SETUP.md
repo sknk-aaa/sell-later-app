@@ -1,74 +1,32 @@
-# リリース設定手順（STEP4・ユーザー作業）
+# このアプリ固有のリリース設定値
 
-> **状態（2026-05-30）: 下記セットアップは完了済み。GitHub Actions → TestFlight 初回配信に成功**。本書は再セットアップ／引き継ぎ用の記録として残す。Secrets・証明書・RevenueCat・ASC設定は登録済み（詳細は [HANDOFF.md](HANDOFF.md) 11章・12章）。
+> **状態（2026-05-30）: セットアップ完了・TestFlight初回配信成功済み。**
+> **配信手順そのもの（fastlane/match/Secrets/ワークフロー）は汎用化して [IOS_CICD_RECIPE.md](IOS_CICD_RECIPE.md) に集約**。本書はこのアプリ固有の値（bundle id・課金製品・RevenueCat・AdMob）と完了状況だけを記録する。Secrets一覧・証明書の完了状況は [HANDOFF.md](HANDOFF.md) 11〜12章。
 
-コード/CI設定は実装済み。**TestFlight配信・課金・広告の実動作**には、以下のアカウント作成とシークレット登録が必要。これが完了すると GitHub Actions（main push / `v*` タグ / 手動 Run）でビルド→TestFlight自動配信が動く。
+## アプリ固有の値
+- **bundle id**: `com.selllater.app`（変更時は `app.json` の `ios.bundleIdentifier` / `fastlane/Appfile` の `APP_IDENTIFIER` / 両ワークフローの env / 課金製品ID接頭辞 / AdMob を合わせる）
+- **ホーム表示名**: `app.json` の `name` ＝「売るもの管理」（ストア掲載名は別途ASCで設定）
 
-## 0. 重要な前提
-- **Expo Go では課金/広告は動かない**（ネイティブ依存）。ただしアプリは起動する（課金/広告のみ無効化）。課金・広告・最終ビルドは **dev build または TestFlight** で確認する。
-- iOSの `ios/` ディレクトリは**Gitに含めない**。CIが毎回 `expo prebuild` で生成する。
+## 課金（IAP）— RevenueCat経由
+製品は App Store Connect で作成（作成済み）:
+- 非消費型（買い切り）: `com.selllater.app.pro.lifetime` / ¥1,500
+- 自動更新サブスク: `com.selllater.app.pro.monthly` / ¥500/月（サブスクグループ内）
 
-## 1. Apple Developer / App Store Connect
-1. Apple Developer Program に登録（有料）。
-2. App Store Connect で新規アプリを作成。bundle id は **`com.selllater.app`**（変更する場合は `app.json` の `ios.bundleIdentifier` と `fastlane/Appfile`・`src/purchases/products.ts` のSKU接頭辞・AdMob設定も合わせる）。
-3. `APPLE_TEAM_ID`（10桁）を控える。
+RevenueCat 設定（完了済み）:
+- プロジェクト `selllater`、iOSアプリ（bundle id `com.selllater.app`）追加
+- ASCの **In-App Purchase キー(.p8)** を登録（レシート検証用）
+- **Entitlement `pro`** に両製品を割当（`src/purchases/config.ts` の `ENTITLEMENT_PRO` と一致）
+- **Offering `default`(current)** に2製品のパッケージ
+- iOS公開SDKキー(`appl_xxx`) → Secret `EXPO_PUBLIC_REVENUECAT_IOS_KEY`（CIのJSバンドル時に注入）。ローカルdev buildは `.env` に同キー
+- サンドボックステスター（ASC → Users and Access → Sandbox）で実機テスト購入
 
-## 2. 課金（IAP）製品を作成（App Store Connect）
-※ 課金は **RevenueCat** 経由（`react-native-purchases`）。ただし製品自体は必ず ASC で作る。
-- 非消費型（買い切り）: 製品ID **`com.selllater.app.pro.lifetime`** / 価格 ¥1,500
-- 自動更新サブスク: サブスクグループ作成 → 製品ID **`com.selllater.app.pro.monthly`** / 価格 ¥500/月
-- 審査用にサンドボックステスター（Users and Access → Sandbox）を作成し、実機でサインインしてテスト購入。
-- App Store Connect → Users and Access → Integrations → **In-App Purchase** キーを発行（RevenueCatに登録する）。
+## AdMob（本番ID差し替えが残タスク）
+現状はGoogleテストID。本番化する箇所:
+- `app.json` の `react-native-google-mobile-ads` プラグイン `iosAppId`
+- `src/ads/AdBannerNative.tsx` の `BANNER_UNIT_ID`（現在 `TestIds.BANNER`）
+- ※審査までは**テストIDのまま**（自分の広告クリックは規約違反）
 
-## 2b. RevenueCat 設定
-1. [RevenueCat](https://www.revenuecat.com/) でアカウント作成 → Project 作成 → iOSアプリ追加（bundle id `com.selllater.app`）。
-2. App Store Connect の **In-App Purchase キー（.p8）** を RevenueCat に登録（レシート検証用）。
-3. **Products**: 上記2製品（lifetime / monthly）を RevenueCat に追加。
-4. **Entitlements**: 識別子 **`pro`** を作成し、両製品を割り当てる（`src/purchases/config.ts` の `ENTITLEMENT_PRO` と一致）。
-5. **Offerings**: `default` オファリングに2製品のパッケージを入れる（`current` として配信。アプリはこの current の availablePackages を表示）。
-6. **iOS公開SDKキー**（`appl_xxx`）をコピー → GitHub Secret `EXPO_PUBLIC_REVENUECAT_IOS_KEY` に登録（CIのJSバンドル時に注入される）。ローカルdev buildで試す場合は `.env` に `EXPO_PUBLIC_REVENUECAT_IOS_KEY=appl_xxx`。
-
-## 3. AdMob
-1. AdMob アカウント作成 → iOSアプリを追加。
-2. **アプリID**（`ca-app-pub-XXXX~YYYY`）と**バナー広告ユニットID**を取得。
-3. 差し替え箇所:
-   - `app.json` の `react-native-google-mobile-ads` プラグイン `iosAppId`（現在はGoogleテストID）。
-   - `src/ads/AdBannerNative.tsx` の `BANNER_UNIT_ID`（現在 `TestIds.BANNER`）。
-   - ※本番審査までは**テストIDのまま**にすること（自分の広告をクリックすると規約違反）。
-
-## 4. fastlane match（証明書管理）※Mac不要
-1. **空のプライベートGitリポジトリ**を別途作成（例 `youraccount/certificates`）→ そのURLが `MATCH_GIT_URL`。
-2. 証明書の暗号化パスフレーズを自分で決める → `MATCH_PASSWORD`。
-3. 上記＋ASC APIキー等の Secrets を**先に全部登録**（セクション6）。
-4. GitHub → Actions → **「iOS Certificates (one-time setup)」**ワークフローを **Run workflow** で1回だけ実行。
-   → macOSランナー上で `fastlane ios certs` が走り、証明書/プロビジョニングプロファイルを生成して match リポジトリへ保存する（**Mac不要**）。
-5. 以後の本番ビルドは `ios.yml` が `readonly` で取得して使う。
-
-## 5. App Store Connect API Key
-App Store Connect → Users and Access → Integrations → API Keys で Key を発行:
-- `.p8` ファイル、`Key ID`、`Issuer ID` を取得。
-- Secret `APP_STORE_CONNECT_API_KEY` には **`.p8` の生PEM中身をそのまま貼る**（`-----BEGIN PRIVATE KEY-----` ごと）。**base64文字列でも可**（ワークフローの「Prepare ASC API key」が両対応し `openssl` で `KEY OK` を検証）。
-- 発行済み: `AuthKey_GSFCH87D9K.p8`（Key ID `GSFCH87D9K`）。`.p8` はコミット禁止（`*.p8` は `.gitignore` 済み）。
-
-## 6. GitHub Secrets 登録
-リポジトリ Settings → Secrets and variables → Actions:
-| Secret | 内容 |
-|---|---|
-| `APPLE_TEAM_ID` | Apple Developer Team ID |
-| `MATCH_GIT_URL` | 証明書リポジトリのURL |
-| `MATCH_PASSWORD` | match の暗号化パスフレーズ |
-| `MATCH_GIT_BASIC_AUTHORIZATION` | 証明書リポジトリ取得用 `base64(user:token)` |
-| `APP_STORE_CONNECT_API_KEY_ID` | API Key の Key ID |
-| `APP_STORE_CONNECT_API_ISSUER_ID` | Issuer ID |
-| `APP_STORE_CONNECT_API_KEY` | `.p8` を base64 化した文字列 |
-| `EXPO_PUBLIC_REVENUECAT_IOS_KEY` | RevenueCat の iOS公開SDKキー（`appl_xxx`） |
-
-## 7. 配信
-- `main` に push、または `v1.0.0` のようなタグ作成、または手動 Run で `.github/workflows/ios.yml`（`runs-on: macos-26`）が起動。
-- 手順: `npm ci` → `expo prebuild` → `pod install` → `fastlane ios beta`（match→gym→pilotでTestFlightへ）。ビルド番号は `GITHUB_RUN_NUMBER` で自動採番。
-- 成功すると TestFlight に表示される（Apple側の処理待ちは数分〜十数分）。
-- **証明書の初回作成**だけは別ワークフロー「iOS Certificates (one-time setup)」を1回手動実行（実施済み）。証明書を作り直す時以外は不要。
-
-## 8. 動作確認（実機）
-- TestFlightビルドで: 広告バナー表示（無料時）、21件目で誘導、写真複数枚（Pro）、分析ロック/解放、買い切り・月額の購入と復元、購入後 isPro が反映され広告非表示。
-- アイコン/スプラッシュは青基調のプレースホルダ。本番デザインができたら `assets/` を差し替え（`node scripts/gen-assets.js` は再生成用）。
+## 実機での動作確認チェック（TestFlight）
+- 広告バナー表示（無料時）／21件目で `/paywall` 誘導／写真2枚目ロック／分析ロック
+- 買い切り・月額の購入と復元 → 購入後 `isPro` 反映で広告非表示・制限解除
+- 複数写真（Pro）／アイコン・スプラッシュ（現状は青プレースホルダ、本番は `assets/` 差し替え。`node scripts/gen-assets.js` で再生成）

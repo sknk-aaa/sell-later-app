@@ -1,5 +1,13 @@
 # Claude Code への指示文（実装）
 
+> **⚠️ 履歴ドキュメント（完了済み・STEP1〜4 実装完了）。** これは開発開始時の初期計画書であり、**現行の正ではない**。経緯を辿る目的でのみ参照すること。実装途中で計画から変わった点に注意:
+> - 課金は `react-native-iap` → **RevenueCat(react-native-purchases)** に変更
+> - 月額は 480円 → **500円**
+> - `ios/` は **Git管理しない**（CIが毎回 `expo prebuild` で生成）
+> - CIランナーは `macos-latest` → **macos-26**（iOS 26 SDK必須化に対応）
+>
+> **現状・構成・残タスクは [HANDOFF.md](HANDOFF.md)、配信手順は [IOS_CICD_RECIPE.md](IOS_CICD_RECIPE.md) を見ること。**
+
 ## 役割
 Claude Code は **中身（実装）** を担当する。UI/見た目は Claude Design で作成済みのプロトタイプを使い、データ・ロジック・課金・配信を設計書に基づいて実装する。
 
