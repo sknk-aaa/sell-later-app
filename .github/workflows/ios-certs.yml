@@ -38,28 +38,22 @@ jobs:
 
       - name: Verify match git access
         run: |
+          CLEAN=$(printf '%s' "$MATCH_GIT_BASIC_AUTHORIZATION" | tr -d '\r\n ')
+          echo "::add-mask::$CLEAN"
+          echo "MATCH_GIT_BASIC_AUTHORIZATION=$CLEAN" >> "$GITHUB_ENV"
           case "$MATCH_GIT_URL" in
-            https://github.com/*.git) echo "URL format: OK (https + .git)";;
-            https://github.com/*) echo "URL format: https だが .git が無い";;
-            git@*) echo "URL format: SSH(git@) → HTTPSに変更が必要";;
-            "") echo "URL: 空です(MATCH_GIT_URL未設定)";;
-            *) echo "URL format: 想定外";;
+            https://github.com/*.git) echo "URL format: OK";;
+            *) echo "URL format: 要確認(https://github.com/owner/repo.git 形式に)";;
           esac
-          if printf '%s' "$MATCH_GIT_BASIC_AUTHORIZATION" | base64 -d 2>/dev/null | grep -q ":"; then
-            echo "BASIC_AUTH: user:token 形式にデコードOK"
-          else
-            echo "BASIC_AUTH: 不正(base64でない/コロン無し)"
-          fi
-          echo "--- GitHub API checks ---"
-          CREDS=$(printf '%s' "$MATCH_GIT_BASIC_AUTHORIZATION" | base64 -d)
-          echo "auth user: ${CREDS%%:*}"
-          echo "token /user http: $(curl -s -o /dev/null -w '%{http_code}' -u "$CREDS" https://api.github.com/user)  (200=有効/401=トークン無効)"
+          DEC=$(printf '%s' "$CLEAN" | base64 -d 2>/dev/null)
+          TOKEN="${DEC#*:}"
+          echo "auth user: ${DEC%%:*}"
+          echo "token /user (Bearer): $(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: Bearer $TOKEN" https://api.github.com/user)  (200=有効/401=無効)"
           REPO_PATH=$(printf '%s' "$MATCH_GIT_URL" | sed -E 's#https://github.com/##; s#\.git$##')
-          echo "repo /repos http: $(curl -s -o /dev/null -w '%{http_code}' -u "$CREDS" "https://api.github.com/repos/$REPO_PATH")  (200=アクセス可/404=未存在orアクセス不可)"
-          echo "--- git ls-remote ---"
+          echo "repo /repos (Bearer): $(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: Bearer $TOKEN" "https://api.github.com/repos/$REPO_PATH")  (200=アクセス可/404=不可)"
           set +e
-          OUT=$(git -c http.extraheader="Authorization: Basic $MATCH_GIT_BASIC_AUTHORIZATION" ls-remote "$MATCH_GIT_URL" 2>&1); CODE=$?
-          echo "$OUT" | head -5
+          OUT=$(git -c http.extraheader="Authorization: Basic $CLEAN" ls-remote "$MATCH_GIT_URL" 2>&1); CODE=$?
+          echo "$OUT" | head -3
           if [ $CODE -eq 0 ]; then echo "GIT AUTH OK"; else echo "GIT AUTH FAILED (exit $CODE)"; exit 1; fi
 
       - name: Create & store certificates
