@@ -1,13 +1,12 @@
 default_platform(:ios)
 
 platform :ios do
-  # App Store Connect API Key（base64の.p8をSecretで渡す）
+  # App Store Connect API Key（ワークフローが復元した .p8 のパスを渡す）
   def asc_api_key
     app_store_connect_api_key(
       key_id: ENV["APP_STORE_CONNECT_API_KEY_ID"],
       issuer_id: ENV["APP_STORE_CONNECT_API_ISSUER_ID"],
-      key_content: ENV["APP_STORE_CONNECT_API_KEY"],
-      is_key_content_base64: true,
+      key_filepath: ENV["ASC_API_KEY_PATH"],
       in_house: false
     )
   end

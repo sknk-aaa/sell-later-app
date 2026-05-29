@@ -24,5 +24,12 @@ jobs:
         with:
           ruby-version: '3.3'
           bundler-cache: true
+      - name: Prepare ASC API key
+        run: |
+          printf '%s' "$APP_STORE_CONNECT_API_KEY" | base64 --decode > "$RUNNER_TEMP/asc_api_key.p8"
+          echo "ASC_API_KEY_PATH=$RUNNER_TEMP/asc_api_key.p8" >> "$GITHUB_ENV"
+          echo "--- restored key header (should be a PEM header) ---"
+          head -1 "$RUNNER_TEMP/asc_api_key.p8"
+
       - name: Create & store certificates
         run: bundle exec fastlane ios certs

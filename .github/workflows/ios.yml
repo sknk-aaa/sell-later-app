@@ -46,8 +46,12 @@ jobs:
           cd ios
           pod install --repo-update
 
-      - name: List ios directory (debug)
-        run: ls -la ios
+      - name: Prepare ASC API key
+        run: |
+          printf '%s' "$APP_STORE_CONNECT_API_KEY" | base64 --decode > "$RUNNER_TEMP/asc_api_key.p8"
+          echo "ASC_API_KEY_PATH=$RUNNER_TEMP/asc_api_key.p8" >> "$GITHUB_ENV"
+          echo "--- restored key header (should be a PEM header) ---"
+          head -1 "$RUNNER_TEMP/asc_api_key.p8"
 
       - name: Build & upload to TestFlight
         run: bundle exec fastlane ios beta
