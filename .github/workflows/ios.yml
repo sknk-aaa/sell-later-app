@@ -74,7 +74,7 @@ jobs:
           REPO_PATH=$(printf '%s' "$MATCH_GIT_URL" | sed -E 's#https://github.com/##; s#\.git$##')
           echo "repo /repos (Bearer): $(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: Bearer $TOKEN" "https://api.github.com/repos/$REPO_PATH")  (200=アクセス可/404=不可)"
           set +e
-          OUT=$(cd "$RUNNER_TEMP" && git -c credential.helper= -c http.https://github.com/.extraheader= -c http.extraheader="Authorization: Basic $CLEAN" ls-remote "$MATCH_GIT_URL" 2>&1); CODE=$?
+          OUT=$(cd "$RUNNER_TEMP" && git -c credential.helper= -c http.extraheader="Authorization: Basic $CLEAN" ls-remote "$MATCH_GIT_URL" 2>&1); CODE=$?
           echo "$OUT" | head -3
           if [ $CODE -eq 0 ]; then echo "GIT AUTH OK"; else echo "GIT AUTH FAILED (exit $CODE)"; exit 1; fi
 
