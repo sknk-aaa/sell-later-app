@@ -1,5 +1,6 @@
 import React from 'react';
-import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '@/components/Icon';
@@ -24,7 +25,13 @@ export default function SaleScreen() {
 
   const [price, setPrice] = React.useState(vm ? String(vm.expectedPrice) : '');
   const [shipping, setShipping] = React.useState(vm ? String(vm.shippingFee) : '0');
-  const soldAt = React.useMemo(() => new Date(), []);
+  const [soldAt, setSoldAt] = React.useState(() => new Date());
+  const [showPicker, setShowPicker] = React.useState(false);
+
+  const onChangeDate = (e: DateTimePickerEvent, d?: Date) => {
+    if (Platform.OS !== 'ios') setShowPicker(false);
+    if (e.type === 'set' && d) setSoldAt(d);
+  };
 
   if (!vm) {
     return (
@@ -60,13 +67,24 @@ export default function SaleScreen() {
           <View style={styles.divider} />
           <MoneyField label="実送料" value={shipping} onChange={setShipping} />
           <View style={styles.divider} />
-          <View style={styles.fieldRow}>
+          <Pressable style={styles.fieldRow} onPress={() => setShowPicker((v) => !v)}>
             <Text style={styles.fieldLabel}>売却日</Text>
             <View style={styles.dateValueRow}>
               <Text style={styles.dateValue}>{formatDate(soldAt)}</Text>
               <Icon name="calendar" size={16} color={colors.ink4} />
             </View>
-          </View>
+          </Pressable>
+          {showPicker && (
+            <View style={styles.pickerWrap}>
+              <DateTimePicker
+                value={soldAt}
+                mode="date"
+                display={Platform.OS === 'ios' ? 'inline' : 'default'}
+                maximumDate={new Date()}
+                onChange={onChangeDate}
+              />
+            </View>
+          )}
         </View>
 
         {/* 実利益プレビュー */}
@@ -131,6 +149,7 @@ const styles = StyleSheet.create({
 
   dateValueRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   dateValue: { fontSize: 16, color: colors.ink1, ...numFont },
+  pickerWrap: { borderTopWidth: 1, borderTopColor: colors.divider, paddingHorizontal: 8 },
 
   profitLabel: { fontSize: 14, color: colors.ink2 },
   profitMinor: { fontSize: 15, fontWeight: '600', color: colors.ink2, ...numFont },

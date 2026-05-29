@@ -40,6 +40,13 @@ export const saleRecords = sqliteTable('sale_records', {
   createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
 });
 
+export const categories = sqliteTable('categories', {
+  id: text('id').primaryKey(),
+  name: text('name').notNull().unique(),
+  sortOrder: integer('sort_order').notNull(),
+  isDefault: integer('is_default', { mode: 'boolean' }).notNull().default(false),
+});
+
 export const settings = sqliteTable('settings', {
   id: integer('id').primaryKey(),
   isPro: integer('is_pro', { mode: 'boolean' }).notNull().default(false),
@@ -52,5 +59,6 @@ export type NewItem = typeof items.$inferInsert;
 export type ItemImage = typeof itemImages.$inferSelect;
 export type SaleRecord = typeof saleRecords.$inferSelect;
 export type Setting = typeof settings.$inferSelect;
+export type Category = typeof categories.$inferSelect;
 export type ItemCondition = Item['condition'];
 export type ItemStatus = Item['status'];

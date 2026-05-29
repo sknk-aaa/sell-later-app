@@ -3,8 +3,8 @@ import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Icon, type IconName } from './Icon';
 import { ImageField } from './ImageField';
 import { PickerSheet } from './PickerSheet';
-import { CATEGORIES } from '@/constants/categories';
 import { CONDITIONS, CONDITION_LABEL } from '@/constants/conditions';
+import { useCategoryStore } from '@/stores/useCategoryStore';
 import { STATUS } from '@/theme/status';
 import { colors, numFont, type StatusKind } from '@/theme/tokens';
 import type { ItemCondition } from '@/db/schema';
@@ -31,6 +31,7 @@ export const ProductForm = React.forwardRef<ProductFormHandle, Props>(function P
   ref,
 ) {
   const feeRate = useSettingsStore((s) => s.feeRate);
+  const categories = useCategoryStore((s) => s.categories);
 
   const [name, setName] = React.useState(initial?.name ?? '');
   const [category, setCategory] = React.useState(initial?.category ?? '');
@@ -185,7 +186,7 @@ export const ProductForm = React.forwardRef<ProductFormHandle, Props>(function P
       <PickerSheet
         visible={picker === 'category'}
         title="カテゴリを選択"
-        options={CATEGORIES.map((c) => ({ key: c, label: c }))}
+        options={categories.map((c) => ({ key: c.name, label: c.name }))}
         selectedKey={category}
         onSelect={(k) => setCategory(k)}
         onClose={() => setPicker(null)}

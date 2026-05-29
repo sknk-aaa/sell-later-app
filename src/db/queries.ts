@@ -1,10 +1,12 @@
-import { desc, eq } from 'drizzle-orm';
+import { asc, desc, eq } from 'drizzle-orm';
 import { db } from './client';
 import {
+  categories,
   items,
   itemImages,
   saleRecords,
   settings,
+  type Category,
   type ItemImage,
   type NewItem,
   type SaleRecord,
@@ -58,3 +60,20 @@ export const ensureSettings = (): Setting => {
 
 export const updateSettings = (patch: Partial<Omit<Setting, 'id'>>) =>
   db.update(settings).set(patch).where(eq(settings.id, 1)).run();
+
+// ── Categories ─────────────────────────────────────────
+export const getAllCategories = (): Category[] =>
+  db.select().from(categories).orderBy(asc(categories.sortOrder)).all();
+
+export const insertCategory = (row: typeof categories.$inferInsert) =>
+  db.insert(categories).values(row).run();
+
+export const deleteCategory = (id: string) =>
+  db.delete(categories).where(eq(categories.id, id)).run();
+
+// ── Clear all item data（設定: データの削除） ───────────
+export const deleteAllItemData = () => {
+  db.delete(saleRecords).run();
+  db.delete(itemImages).run();
+  db.delete(items).run();
+};

@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import * as Crypto from 'expo-crypto';
 import {
+  deleteAllItemData,
   deleteImagesByItem,
   deleteItemRow,
   deleteSaleByItem,
@@ -52,6 +53,7 @@ type ItemState = {
     sale: { actualPrice: number; actualShipping: number; soldAt: Date },
     feeRate: number,
   ) => void;
+  clearAllData: () => void;
 };
 
 const refresh = () => ({
@@ -129,6 +131,12 @@ export const useItemStore = create<ItemState>((set) => ({
       createdAt: now,
     });
     updateItemRow(itemId, { status: 'sold', updatedAt: now });
+    set(refresh());
+  },
+
+  clearAllData: () => {
+    for (const img of getAllImages()) deleteImageFile(img.filePath);
+    deleteAllItemData();
     set(refresh());
   },
 }));

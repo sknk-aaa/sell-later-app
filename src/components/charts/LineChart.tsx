@@ -12,6 +12,15 @@ import Svg, {
   Text as SvgText,
 } from 'react-native-svg';
 
+// データ最大値を「きりのよい」上限に丸める
+function niceMax(v: number): number {
+  if (v <= 0) return 10000;
+  const pow = Math.pow(10, Math.floor(Math.log10(v)));
+  const n = v / pow;
+  const m = n <= 1 ? 1 : n <= 2 ? 2 : n <= 5 ? 5 : 10;
+  return m * pow;
+}
+
 // charts.jsx の LineChart（月別 売却済み利益）を移植
 export function LineChart({
   data,
@@ -28,11 +37,12 @@ export function LineChart({
   highlightLabel?: string;
   highlightValue?: string;
 }) {
-  const pad = { l: 44, r: 12, t: 16, b: 28 };
+  const pad = { l: 48, r: 12, t: 16, b: 28 };
   const innerW = w - pad.l - pad.r;
   const innerH = h - pad.t - pad.b;
-  const max = 40000;
-  const ticks = [40000, 30000, 20000, 10000, 0];
+  const max = niceMax(Math.max(0, ...data.map((d) => d.value)));
+  const step = max / 4;
+  const ticks = [4, 3, 2, 1, 0].map((i) => Math.round(i * step));
   const xs = data.map((_, i) => pad.l + (innerW * i) / (data.length - 1));
   const ys = data.map((d) => pad.t + innerH - (d.value / max) * innerH);
   const linePath = data.map((d, i) => `${i === 0 ? 'M' : 'L'} ${xs[i]} ${ys[i]}`).join(' ');

@@ -4,19 +4,67 @@ import { useRouter } from 'expo-router';
 import { Icon, type IconName } from '@/components/Icon';
 import { StatusBadge } from '@/components/StatusBadge';
 import { PhotoSlot } from '@/components/PhotoSlot';
+import { PickerSheet } from '@/components/PickerSheet';
 import { LargeTitleHeader } from '@/components/headers';
 import { useItemStore } from '@/stores/useItemStore';
 import { useItemViewModels, type ItemVM } from '@/stores/selectors';
-import { colors, numFont, shadowCard } from '@/theme/tokens';
+import { useCategoryStore } from '@/stores/useCategoryStore';
+import { STATUS } from '@/theme/status';
+import { colors, numFont, shadowCard, type StatusKind } from '@/theme/tokens';
 import { formatDate, yen } from '@/utils/format';
 
 type View2 = 'grid' | 'list';
+type SortKey = 'recent' | 'price' | 'profit' | 'status';
+type PickerKind = null | 'sort' | 'category' | 'location' | 'status';
+
+const SORT_LABEL: Record<SortKey, string> = {
+  recent: '登録日が新しい順',
+  price: '見込み売却価格が高い順',
+  profit: '見込み利益が高い順',
+  status: 'ステータス順',
+};
+const STATUS_ORDER: StatusKind[] = ['stored', 'prep', 'listed', 'sold', 'hold'];
 
 export default function ListScreen() {
   const router = useRouter();
-  const items = useItemViewModels();
+  const all = useItemViewModels();
+  const categories = useCategoryStore((s) => s.categories);
   const toggleFavorite = useItemStore((s) => s.toggleFavorite);
+
   const [view, setView] = React.useState<View2>('grid');
+  const [sort, setSort] = React.useState<SortKey>('recent');
+  const [fCategory, setFCategory] = React.useState('all');
+  const [fLocation, setFLocation] = React.useState('all');
+  const [fStatus, setFStatus] = React.useState('all');
+  const [picker, setPicker] = React.useState<PickerKind>(null);
+
+  const locations = React.useMemo(
+    () => Array.from(new Set(all.map((v) => v.location).filter((l): l is string => !!l))),
+    [all],
+  );
+
+  const items = React.useMemo(() => {
+    let list = all.filter(
+      (v) =>
+        (fCategory === 'all' || v.category === fCategory) &&
+        (fLocation === 'all' || v.location === fLocation) &&
+        (fStatus === 'all' || v.status === fStatus),
+    );
+    list = [...list].sort((a, b) => {
+      switch (sort) {
+        case 'price':
+          return b.expectedPrice - a.expectedPrice;
+        case 'profit':
+          return b.expectedProfit - a.expectedProfit;
+        case 'status':
+          return STATUS_ORDER.indexOf(a.status) - STATUS_ORDER.indexOf(b.status) || b.createdAt.getTime() - a.createdAt.getTime();
+        default:
+          return b.createdAt.getTime() - a.createdAt.getTime();
+      }
+    });
+    return list;
+  }, [all, sort, fCategory, fLocation, fStatus]);
+
   const open = (id: string) => router.push(`/item/${id}`);
 
   return (
@@ -27,7 +75,7 @@ export default function ListScreen() {
           right={
             <>
               <Pressable hitSlop={8}><Icon name="search" size={22} color={colors.ink1} /></Pressable>
-              <Pressable hitSlop={8} style={styles.filterBtn}>
+              <Pressable hitSlop={8} style={styles.filterBtn} onPress={() => setPicker('status')}>
                 <Icon name="sliders" size={20} color={colors.ink1} />
                 <Text style={styles.filterBtnText}>絞り込み</Text>
               </Pressable>
@@ -42,12 +90,12 @@ export default function ListScreen() {
           <ToggleBtn active={view === 'list'} onPress={() => setView('list')} icon="rows" label="リスト" />
         </View>
 
-        {/* Filter selects (STEP3で機能化) */}
+        {/* Filter selects */}
         <View style={styles.selects}>
-          <Select label="並び替え" value="登録日が新しい順" />
-          <Select label="カテゴリ" value="すべて" />
-          <Select label="保管場所" value="すべて" />
-          <Select label="ステータス" value="すべて" />
+          <Select label="並び替え" value={SORT_LABEL[sort]} onPress={() => setPicker('sort')} />
+          <Select label="カテゴリ" value={fCategory === 'all' ? 'すべて' : fCategory} onPress={() => setPicker('category')} />
+          <Select label="保管場所" value={fLocation === 'all' ? 'すべて' : fLocation} onPress={() => setPicker('location')} />
+          <Select label="ステータス" value={fStatus === 'all' ? 'すべて' : STATUS[fStatus as StatusKind].label} onPress={() => setPicker('status')} />
         </View>
 
         {/* Count row */}
@@ -58,7 +106,9 @@ export default function ListScreen() {
 
         {items.length === 0 ? (
           <View style={styles.emptyCard}>
-            <Text style={styles.emptyText}>まだ商品がありません。{'\n'}下の「追加」から登録できます。</Text>
+            <Text style={styles.emptyText}>
+              {all.length === 0 ? 'まだ商品がありません。\n下の「追加」から登録できます。' : '条件に一致する商品がありません。'}
+            </Text>
           </View>
         ) : view === 'grid' ? (
           <View style={styles.grid}>
@@ -80,6 +130,39 @@ export default function ListScreen() {
           <Text style={styles.fabLabel}>商品を追加</Text>
         </Pressable>
       </ScrollView>
+
+      <PickerSheet
+        visible={picker === 'sort'}
+        title="並び替え"
+        options={(Object.keys(SORT_LABEL) as SortKey[]).map((k) => ({ key: k, label: SORT_LABEL[k] }))}
+        selectedKey={sort}
+        onSelect={(k) => setSort(k as SortKey)}
+        onClose={() => setPicker(null)}
+      />
+      <PickerSheet
+        visible={picker === 'category'}
+        title="カテゴリで絞り込み"
+        options={[{ key: 'all', label: 'すべて' }, ...categories.map((c) => ({ key: c.name, label: c.name }))]}
+        selectedKey={fCategory}
+        onSelect={setFCategory}
+        onClose={() => setPicker(null)}
+      />
+      <PickerSheet
+        visible={picker === 'location'}
+        title="保管場所で絞り込み"
+        options={[{ key: 'all', label: 'すべて' }, ...locations.map((l) => ({ key: l, label: l }))]}
+        selectedKey={fLocation}
+        onSelect={setFLocation}
+        onClose={() => setPicker(null)}
+      />
+      <PickerSheet
+        visible={picker === 'status'}
+        title="ステータスで絞り込み"
+        options={[{ key: 'all', label: 'すべて' }, ...STATUS_ORDER.map((k) => ({ key: k, label: STATUS[k].label }))]}
+        selectedKey={fStatus}
+        onSelect={setFStatus}
+        onClose={() => setPicker(null)}
+      />
     </View>
   );
 }
@@ -93,15 +176,15 @@ function ToggleBtn({ active, onPress, icon, label }: { active: boolean; onPress:
   );
 }
 
-function Select({ label, value }: { label: string; value: string }) {
+function Select({ label, value, onPress }: { label: string; value: string; onPress: () => void }) {
   return (
-    <View style={styles.select}>
+    <Pressable style={styles.select} onPress={onPress}>
       <Text style={styles.selectLabel}>{label}</Text>
       <View style={styles.selectValueRow}>
         <Text style={styles.selectValue} numberOfLines={1}>{value}</Text>
         <Icon name="chevD" size={12} color={colors.ink3} />
       </View>
-    </View>
+    </Pressable>
   );
 }
 

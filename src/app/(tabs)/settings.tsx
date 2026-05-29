@@ -1,11 +1,43 @@
 import React from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useRouter } from 'expo-router';
 import { Icon, type IconName } from '@/components/Icon';
 import { Card } from '@/components/ui';
+import { PickerSheet } from '@/components/PickerSheet';
 import { LargeTitleHeader } from '@/components/headers';
-import { colors } from '@/theme/tokens';
+import { useSettingsStore } from '@/stores/useSettingsStore';
+import { useItemStore } from '@/stores/useItemStore';
+import { STATUS } from '@/theme/status';
+import { colors, type StatusKind } from '@/theme/tokens';
+import type { Setting } from '@/db/schema';
+
+const THEME_LABEL: Record<Setting['theme'], string> = {
+  system: 'システム設定に従う',
+  light: 'ライト',
+  dark: 'ダーク',
+};
+const STATUS_ORDER: StatusKind[] = ['stored', 'prep', 'listed', 'sold', 'hold'];
 
 export default function SettingsScreen() {
+  const router = useRouter();
+  const theme = useSettingsStore((s) => s.theme);
+  const setTheme = useSettingsStore((s) => s.setTheme);
+  const clearAllData = useItemStore((s) => s.clearAllData);
+  const [themeOpen, setThemeOpen] = React.useState(false);
+
+  const confirmClear = () => {
+    Alert.alert('データの削除', 'すべての商品・写真・売却記録を削除します。この操作は取り消せません。', [
+      { text: 'キャンセル', style: 'cancel' },
+      { text: '削除', style: 'destructive', onPress: () => clearAllData() },
+    ]);
+  };
+
+  const showStatuses = () => {
+    Alert.alert('ステータス（固定）', STATUS_ORDER.map((k) => `・${STATUS[k].label}`).join('\n') + '\n\nステータスは売却記録などの動作に関わるため固定です。');
+  };
+
+  const notReady = (title: string) => Alert.alert(title, 'この項目はv1.0では準備中です。');
+
   return (
     <View style={styles.screen}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 24 }}>
@@ -13,42 +45,49 @@ export default function SettingsScreen() {
 
         {/* Pro card */}
         <Card style={styles.proCard}>
-          <View style={styles.proIcon}>
-            <Icon name="crown" size={32} color={colors.star} />
-          </View>
+          <View style={styles.proIcon}><Icon name="crown" size={32} color={colors.star} /></View>
           <View style={{ flex: 1 }}>
             <Text style={styles.proTitle}>Proプラン</Text>
             <Text style={styles.proSub} numberOfLines={1}>広告を非表示にして、より便利に使えます</Text>
           </View>
-          <Pressable style={styles.proBtn}>
+          <Pressable style={styles.proBtn} onPress={() => notReady('Proプラン')}>
             <Text style={styles.proBtnText}>プランを確認</Text>
           </Pressable>
         </Card>
 
         <SectionTitle>アカウント・データ</SectionTitle>
         <ListCard>
-          <Row icon="trash" iconBg="rgba(255,107,107,0.12)" iconColor={colors.danger} label="データの削除" labelColor={colors.danger} isLast />
+          <Row icon="trash" iconBg="rgba(255,107,107,0.12)" iconColor={colors.danger} label="データの削除" labelColor={colors.danger} onPress={confirmClear} isLast />
         </ListCard>
 
         <SectionTitle>表示・カスタマイズ</SectionTitle>
         <ListCard>
-          <Row icon="palette" label="テーマカラー" value="システム設定に従う" />
-          <Row icon="percent" label="利益の計算方法" value="送料・手数料を差し引く" />
-          <Row icon="sliders" label="ステータスの編集" />
-          <Row icon="folder" label="カテゴリの編集" isLast />
+          <Row icon="palette" label="テーマカラー" value={THEME_LABEL[theme]} onPress={() => setThemeOpen(true)} />
+          <Row icon="percent" label="利益の計算方法" value="送料・手数料を差し引く" onPress={() => notReady('利益の計算方法')} />
+          <Row icon="sliders" label="ステータスの編集" value="固定" onPress={showStatuses} />
+          <Row icon="folder" label="カテゴリの編集" onPress={() => router.push('/settings/categories')} isLast />
         </ListCard>
 
         <SectionTitle>サポート・その他</SectionTitle>
         <ListCard>
-          <Row icon="help" label="よくある質問" />
-          <Row icon="mail" label="お問い合わせ" />
-          <Row icon="doc" label="利用規約" />
-          <Row icon="shield" label="プライバシーポリシー" />
-          <Row icon="info" label="アプリについて" value="Version 1.0.0" isLast />
+          <Row icon="help" label="よくある質問" onPress={() => notReady('よくある質問')} />
+          <Row icon="mail" label="お問い合わせ" onPress={() => notReady('お問い合わせ')} />
+          <Row icon="doc" label="利用規約" onPress={() => notReady('利用規約')} />
+          <Row icon="shield" label="プライバシーポリシー" onPress={() => notReady('プライバシーポリシー')} />
+          <Row icon="info" label="アプリについて" value="Version 1.0.0" onPress={() => Alert.alert('売るもの管理', 'Version 1.0.0')} isLast />
         </ListCard>
 
         <View style={{ height: 24 }} />
       </ScrollView>
+
+      <PickerSheet
+        visible={themeOpen}
+        title="テーマカラー"
+        options={(Object.keys(THEME_LABEL) as Setting['theme'][]).map((k) => ({ key: k, label: THEME_LABEL[k] }))}
+        selectedKey={theme}
+        onSelect={(k) => setTheme(k as Setting['theme'])}
+        onClose={() => setThemeOpen(false)}
+      />
     </View>
   );
 }
@@ -62,12 +101,12 @@ function ListCard({ children }: { children: React.ReactNode }) {
 }
 
 function Row({
-  icon, iconBg, iconColor, label, labelColor, value, isLast,
+  icon, iconBg, iconColor, label, labelColor, value, isLast, onPress,
 }: {
-  icon: IconName; iconBg?: string; iconColor?: string; label: string; labelColor?: string; value?: string; isLast?: boolean;
+  icon: IconName; iconBg?: string; iconColor?: string; label: string; labelColor?: string; value?: string; isLast?: boolean; onPress?: () => void;
 }) {
   return (
-    <Pressable style={[styles.row, !isLast && styles.rowBorder]}>
+    <Pressable style={[styles.row, !isLast && styles.rowBorder]} onPress={onPress}>
       <View style={[styles.rowIcon, { backgroundColor: iconBg ?? colors.primarySoft }]}>
         <Icon name={icon} size={16} color={iconColor ?? colors.primary} />
       </View>

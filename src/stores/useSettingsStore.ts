@@ -10,6 +10,7 @@ type SettingsState = {
   loaded: boolean;
   load: () => void;
   setFeeRate: (rate: number) => void;
+  setTheme: (theme: Setting['theme']) => void;
 };
 
 export const useSettingsStore = create<SettingsState>((set) => ({
@@ -24,5 +25,9 @@ export const useSettingsStore = create<SettingsState>((set) => ({
   setFeeRate: (rate) => {
     updateSettings({ feeRate: rate });
     set({ feeRate: rate });
+  },
+  setTheme: (theme) => {
+    updateSettings({ theme });
+    set({ theme });
   },
 }));

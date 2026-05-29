@@ -8,6 +8,7 @@ import { db } from '@/db/client';
 import migrations from '../../drizzle/migrations';
 import { useItemStore } from '@/stores/useItemStore';
 import { useSettingsStore } from '@/stores/useSettingsStore';
+import { useCategoryStore } from '@/stores/useCategoryStore';
 import { colors } from '@/theme/tokens';
 
 export default function RootLayout() {
@@ -16,6 +17,7 @@ export default function RootLayout() {
   React.useEffect(() => {
     if (success) {
       useSettingsStore.getState().load();
+      useCategoryStore.getState().load();
       useItemStore.getState().load();
     }
   }, [success]);
@@ -44,6 +46,7 @@ export default function RootLayout() {
           <Stack.Screen name="item/[id]/edit" options={{ presentation: 'modal' }} />
           <Stack.Screen name="add" options={{ presentation: 'modal' }} />
           <Stack.Screen name="sale" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="settings/categories" />
         </Stack>
       )}
     </SafeAreaProvider>
