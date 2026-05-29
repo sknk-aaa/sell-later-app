@@ -8,7 +8,7 @@ on:
 
 jobs:
   build:
-    runs-on: macos-latest
+    runs-on: macos-26
     timeout-minutes: 60
     env:
       APP_IDENTIFIER: com.selllater.app
@@ -24,6 +24,13 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Select latest Xcode (iOS 26 SDK required by App Store)
+        run: |
+          LATEST=$(ls -d /Applications/Xcode_*.app 2>/dev/null | sort -V | tail -1)
+          echo "Selecting $LATEST"
+          sudo xcode-select -s "$LATEST/Contents/Developer"
+          xcodebuild -version
 
       - uses: actions/setup-node@v4
         with:
