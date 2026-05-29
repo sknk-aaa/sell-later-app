@@ -36,5 +36,14 @@ jobs:
           head -1 "$KEYFILE"
           if openssl pkey -in "$KEYFILE" -noout; then echo "KEY OK"; else echo "KEY INVALID"; exit 1; fi
 
+      - name: Verify match git access
+        run: |
+          if git -c http.extraheader="Authorization: Basic $MATCH_GIT_BASIC_AUTHORIZATION" ls-remote "$MATCH_GIT_URL" >/dev/null 2>&1; then
+            echo "GIT AUTH OK"
+          else
+            echo "GIT AUTH FAILED: certificatesリポジトリのURL/権限/base64を確認してください"
+            exit 1
+          fi
+
       - name: Create & store certificates
         run: bundle exec fastlane ios certs
