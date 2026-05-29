@@ -42,7 +42,12 @@ jobs:
         run: npx expo prebuild --platform ios --no-install
 
       - name: Install CocoaPods
-        run: npx pod-install
+        run: |
+          cd ios
+          pod install --repo-update
+
+      - name: List ios directory (debug)
+        run: ls -la ios
 
       - name: Build & upload to TestFlight
         run: bundle exec fastlane ios beta
