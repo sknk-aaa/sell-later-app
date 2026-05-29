@@ -1,12 +1,14 @@
 import React from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { useRouter } from 'expo-router';
 import { Icon, type IconName } from '@/components/Icon';
-import { Card, SectionHead } from '@/components/ui';
+import { Card, SectionHead, Button } from '@/components/ui';
 import { Donut } from '@/components/charts/Donut';
 import { LineChart } from '@/components/charts/LineChart';
 import { PickerSheet } from '@/components/PickerSheet';
 import { LargeTitleHeader } from '@/components/headers';
 import { useAnalytics, type AnalyticsPeriod } from '@/stores/selectors';
+import { useSettingsStore } from '@/stores/useSettingsStore';
 import { STATUS } from '@/theme/status';
 import { colors, numFont, shadowCard, type StatusKind } from '@/theme/tokens';
 import { yen } from '@/utils/format';
@@ -24,12 +26,28 @@ const STATUS_DONUT_COLOR: Record<StatusKind, string> = {
 };
 
 export default function AnalyticsScreen() {
+  const router = useRouter();
+  const isPro = useSettingsStore((s) => s.isPro);
   const [tab, setTab] = React.useState<Tab>('summary');
   const [period, setPeriod] = React.useState<AnalyticsPeriod>('all');
   const [periodOpen, setPeriodOpen] = React.useState(false);
   const { width } = useWindowDimensions();
   const chartW = width - 32 - 12;
   const a = useAnalytics(period);
+
+  if (!isPro) {
+    return (
+      <View style={styles.screen}>
+        <LargeTitleHeader title="分析" />
+        <View style={styles.lockWrap}>
+          <View style={styles.lockIcon}><Icon name="chart" size={36} color={colors.primary} /></View>
+          <Text style={styles.lockTitle}>分析はPro限定です</Text>
+          <Text style={styles.lockText}>カテゴリ別の売上・利益、月別の推移、売却実績などをProで確認できます。</Text>
+          <Button label="Proにアップグレード" variant="primary" icon="crown" iconColor="#fff" onPress={() => router.push('/paywall')} style={{ marginTop: 16, paddingHorizontal: 24 }} />
+        </View>
+      </View>
+    );
+  }
 
   const statusDonutData = STATUS_ORDER.map((k) => ({ value: a.statusCounts[k], color: STATUS_DONUT_COLOR[k] }));
   const monthlyMax = Math.max(...a.monthlyProfit.map((m) => m.value), 0);
@@ -249,6 +267,10 @@ function BigTile({ icon, color, bg, label, value, sub }: TileDef) {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg },
+  lockWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32, paddingBottom: 80 },
+  lockIcon: { width: 72, height: 72, borderRadius: 20, backgroundColor: colors.primarySoft, alignItems: 'center', justifyContent: 'center', marginBottom: 16 },
+  lockTitle: { fontSize: 18, fontWeight: '700', color: colors.ink1, marginBottom: 8 },
+  lockText: { fontSize: 13, color: colors.ink3, textAlign: 'center', lineHeight: 20 },
   periodBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
     backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border,

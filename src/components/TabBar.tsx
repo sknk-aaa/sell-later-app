@@ -4,6 +4,9 @@ import { useRouter } from 'expo-router';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon, type IconName } from './Icon';
+import { useSettingsStore } from '@/stores/useSettingsStore';
+import { useItemStore } from '@/stores/useItemStore';
+import { canAddItem } from '@/utils/limits';
 import { colors } from '@/theme/tokens';
 
 // styles.css .tabbar / shared.jsx の TabBar を移植（中央に追加FAB）
@@ -20,6 +23,9 @@ const RIGHT = ['analytics', 'settings'];
 export function TabBar({ state, navigation }: BottomTabBarProps) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const isPro = useSettingsStore((s) => s.isPro);
+  const itemCount = useItemStore((s) => s.items.length);
+  const onAdd = () => router.push(canAddItem(isPro, itemCount) ? '/add' : '/paywall');
 
   const currentName = state.routes[state.index]?.name;
 
@@ -49,7 +55,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
   return (
     <View style={[styles.tabbar, { height: 66 + insets.bottom, paddingBottom: insets.bottom }]}>
       {LEFT.map(tab)}
-      <Pressable style={styles.addTab} onPress={() => router.push('/add')}>
+      <Pressable style={styles.addTab} onPress={onAdd}>
         <View style={styles.fab}>
           <Icon name="plus" size={26} color="#fff" />
         </View>

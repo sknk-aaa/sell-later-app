@@ -38,6 +38,9 @@ export default function DetailScreen() {
   const profit = vm.expectedProfit;
   const rate = profitRate(vm.expectedPrice, profit);
   const isSold = vm.status === 'sold';
+  const [activePhoto, setActivePhoto] = React.useState(0);
+  const photos = vm.imagePaths;
+  const active = Math.min(activePhoto, Math.max(0, photos.length - 1));
 
   const onDelete = () => {
     Alert.alert('商品を削除', `「${vm.name}」を削除しますか？この操作は取り消せません。`, [
@@ -69,15 +72,27 @@ export default function DetailScreen() {
         {/* Photo */}
         <View style={styles.photoBlock}>
           <View style={styles.mainPhotoWrap}>
-            {vm.imagePath ? (
-              <Image source={{ uri: vm.imagePath }} style={styles.mainImage} />
+            {photos.length > 0 ? (
+              <Image source={{ uri: photos[active] }} style={styles.mainImage} />
             ) : (
               <PhotoSlot label={vm.name.split(' ')[0]} ratio={4 / 3} radius={12} />
+            )}
+            {photos.length > 1 && (
+              <View style={styles.countPill}><Text style={styles.countPillText}>{active + 1} / {photos.length}</Text></View>
             )}
             <Pressable style={styles.starCircle} hitSlop={6} onPress={() => toggleFavorite(vm.id)}>
               <Icon name={vm.isFavorite ? 'starFill' : 'star'} size={18} color={vm.isFavorite ? undefined : colors.ink3} />
             </Pressable>
           </View>
+          {photos.length > 1 && (
+            <View style={styles.thumbRow}>
+              {photos.map((p, i) => (
+                <Pressable key={i} style={[styles.thumb, i === active && styles.thumbActive]} onPress={() => setActivePhoto(i)}>
+                  <Image source={{ uri: p }} style={styles.thumbImg} />
+                </Pressable>
+              ))}
+            </View>
+          )}
         </View>
 
         {/* Title + meta */}
@@ -210,6 +225,12 @@ const styles = StyleSheet.create({
   photoBlock: { paddingHorizontal: 16, paddingTop: 8 },
   mainPhotoWrap: { borderRadius: 12, overflow: 'hidden' },
   mainImage: { width: '100%', aspectRatio: 4 / 3, backgroundColor: colors.bg2 },
+  countPill: { position: 'absolute', top: 10, left: 10, backgroundColor: 'rgba(0,0,0,0.55)', paddingVertical: 4, paddingHorizontal: 10, borderRadius: 99 },
+  countPillText: { color: '#fff', fontSize: 12, fontWeight: '600', ...numFont },
+  thumbRow: { flexDirection: 'row', gap: 8, marginTop: 8 },
+  thumb: { flex: 1, aspectRatio: 1, borderRadius: 8, overflow: 'hidden' },
+  thumbActive: { borderWidth: 2.5, borderColor: colors.primary },
+  thumbImg: { width: '100%', height: '100%', backgroundColor: colors.bg2 },
   starCircle: {
     position: 'absolute', top: 10, right: 10, width: 30, height: 30, borderRadius: 99, backgroundColor: '#fff',
     alignItems: 'center', justifyContent: 'center',

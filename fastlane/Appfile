@@ -1,0 +1,6 @@
+app_identifier(ENV["APP_IDENTIFIER"] || "com.selllater.app")
+# Apple ID / Team は App Store Connect API Key 認証を使うため通常は不要。
+# 必要に応じて環境変数で指定:
+apple_id(ENV["APPLE_ID"]) if ENV["APPLE_ID"]
+itc_team_id(ENV["ITC_TEAM_ID"]) if ENV["ITC_TEAM_ID"]
+team_id(ENV["APPLE_TEAM_ID"]) if ENV["APPLE_TEAM_ID"]

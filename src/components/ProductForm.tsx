@@ -11,26 +11,29 @@ import type { ItemCondition } from '@/db/schema';
 import type { ItemInput, PhotoValue } from '@/stores/useItemStore';
 import { useSettingsStore } from '@/stores/useSettingsStore';
 import { expectedProfit, feeAmount, profitRate } from '@/utils/calculations';
+import { photoLimit } from '@/utils/limits';
 import { yen } from '@/utils/format';
 
 export type ProductFormHandle = {
-  getSubmission: () => { values: ItemInput; photo: PhotoValue } | null;
+  getSubmission: () => { values: ItemInput; photos: PhotoValue[] } | null;
 };
 
 type Props = {
   initial?: Partial<ItemInput>;
-  initialPhoto?: PhotoValue;
+  initialPhotos?: PhotoValue[];
   onValidityChange?: (valid: boolean) => void;
+  onRequestPro?: () => void;
 };
 
 const onlyDigits = (s: string) => s.replace(/[^0-9]/g, '');
 const toNum = (s: string) => Number(onlyDigits(s) || '0');
 
 export const ProductForm = React.forwardRef<ProductFormHandle, Props>(function ProductForm(
-  { initial, initialPhoto, onValidityChange },
+  { initial, initialPhotos, onValidityChange, onRequestPro },
   ref,
 ) {
   const feeRate = useSettingsStore((s) => s.feeRate);
+  const isPro = useSettingsStore((s) => s.isPro);
   const categories = useCategoryStore((s) => s.categories);
 
   const [name, setName] = React.useState(initial?.name ?? '');
@@ -48,7 +51,7 @@ export const ProductForm = React.forwardRef<ProductFormHandle, Props>(function P
   const [status, setStatus] = React.useState<StatusKind>(initial?.status ?? 'stored');
   const [location, setLocation] = React.useState(initial?.location ?? '');
   const [memo, setMemo] = React.useState(initial?.memo ?? '');
-  const [photo, setPhoto] = React.useState<PhotoValue>(initialPhoto ?? { kind: 'none' });
+  const [photos, setPhotos] = React.useState<PhotoValue[]>(initialPhotos ?? []);
   const [picker, setPicker] = React.useState<null | 'category' | 'condition' | 'status'>(null);
 
   const sellNum = toNum(sellPrice);
@@ -77,13 +80,19 @@ export const ProductForm = React.forwardRef<ProductFormHandle, Props>(function P
         status,
         memo: memo.trim() || null,
       };
-      return { values, photo };
+      return { values, photos };
     },
   }));
 
   return (
     <View>
-      <ImageField photo={photo} onChange={setPhoto} />
+      <ImageField
+        photos={photos}
+        onChange={setPhotos}
+        maxPhotos={photoLimit(isPro)}
+        isPro={isPro}
+        onLocked={() => onRequestPro?.()}
+      />
 
       {/* 商品名 */}
       <View style={styles.field}>

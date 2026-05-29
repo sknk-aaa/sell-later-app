@@ -5,10 +5,13 @@ import { Icon, type IconName } from '@/components/Icon';
 import { StatusBadge } from '@/components/StatusBadge';
 import { PhotoSlot } from '@/components/PhotoSlot';
 import { PickerSheet } from '@/components/PickerSheet';
+import { AdBanner } from '@/components/AdBanner';
 import { LargeTitleHeader } from '@/components/headers';
 import { useItemStore } from '@/stores/useItemStore';
 import { useItemViewModels, type ItemVM } from '@/stores/selectors';
 import { useCategoryStore } from '@/stores/useCategoryStore';
+import { useSettingsStore } from '@/stores/useSettingsStore';
+import { canAddItem } from '@/utils/limits';
 import { STATUS } from '@/theme/status';
 import { colors, numFont, shadowCard, type StatusKind } from '@/theme/tokens';
 import { formatDate, yen } from '@/utils/format';
@@ -30,6 +33,8 @@ export default function ListScreen() {
   const all = useItemViewModels();
   const categories = useCategoryStore((s) => s.categories);
   const toggleFavorite = useItemStore((s) => s.toggleFavorite);
+  const isPro = useSettingsStore((s) => s.isPro);
+  const handleAdd = () => router.push(canAddItem(isPro, all.length) ? '/add' : '/paywall');
 
   const [view, setView] = React.useState<View2>('grid');
   const [sort, setSort] = React.useState<SortKey>('recent');
@@ -125,10 +130,12 @@ export default function ListScreen() {
         )}
 
         {/* Floating add button */}
-        <Pressable style={styles.fabWrap} onPress={() => router.push('/add')}>
+        <Pressable style={styles.fabWrap} onPress={handleAdd}>
           <View style={styles.fab}><Icon name="plus" size={28} color="#fff" /></View>
           <Text style={styles.fabLabel}>商品を追加</Text>
         </Pressable>
+
+        <AdBanner />
       </ScrollView>
 
       <PickerSheet

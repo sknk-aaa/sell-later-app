@@ -7,6 +7,7 @@ import { colors, type StatusKind } from '@/theme/tokens';
 
 export type ItemVM = Item & {
   imagePath: string | null;
+  imagePaths: string[];
   sale: SaleRecord | null;
   expectedProfit: number;
 };
@@ -30,13 +31,15 @@ export function useItemViewModels(): ItemVM[] {
   return useMemo(
     () =>
       items.map((it) => {
-        const img = images
+        const imagePaths = images
           .filter((i) => i.itemId === it.id)
-          .sort((a, b) => a.sortOrder - b.sortOrder)[0];
+          .sort((a, b) => a.sortOrder - b.sortOrder)
+          .map((i) => i.filePath);
         const sale = sales.find((s) => s.itemId === it.id) ?? null;
         return {
           ...it,
-          imagePath: img?.filePath ?? null,
+          imagePath: imagePaths[0] ?? null,
+          imagePaths,
           sale,
           expectedProfit: expectedProfit(it.expectedPrice, feeRate, it.shippingFee),
         };

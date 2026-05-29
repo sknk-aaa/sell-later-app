@@ -9,6 +9,8 @@ import migrations from '../../drizzle/migrations';
 import { useItemStore } from '@/stores/useItemStore';
 import { useSettingsStore } from '@/stores/useSettingsStore';
 import { useCategoryStore } from '@/stores/useCategoryStore';
+import { PurchaseProvider } from '@/purchases/PurchaseProvider';
+import { initAds } from '@/ads/init';
 import { colors } from '@/theme/tokens';
 
 export default function RootLayout() {
@@ -19,6 +21,7 @@ export default function RootLayout() {
       useSettingsStore.getState().load();
       useCategoryStore.getState().load();
       useItemStore.getState().load();
+      initAds();
     }
   }, [success]);
 
@@ -35,19 +38,22 @@ export default function RootLayout() {
           <ActivityIndicator color={colors.primary} />
         </Centered>
       ) : (
-        <Stack
-          screenOptions={{
-            headerShown: false,
-            contentStyle: { backgroundColor: colors.bg },
-          }}
-        >
-          <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="item/[id]" />
-          <Stack.Screen name="item/[id]/edit" options={{ presentation: 'modal' }} />
-          <Stack.Screen name="add" options={{ presentation: 'modal' }} />
-          <Stack.Screen name="sale" options={{ presentation: 'modal' }} />
-          <Stack.Screen name="settings/categories" />
-        </Stack>
+        <PurchaseProvider>
+          <Stack
+            screenOptions={{
+              headerShown: false,
+              contentStyle: { backgroundColor: colors.bg },
+            }}
+          >
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="item/[id]" />
+            <Stack.Screen name="item/[id]/edit" options={{ presentation: 'modal' }} />
+            <Stack.Screen name="add" options={{ presentation: 'modal' }} />
+            <Stack.Screen name="sale" options={{ presentation: 'modal' }} />
+            <Stack.Screen name="settings/categories" />
+            <Stack.Screen name="paywall" options={{ presentation: 'modal' }} />
+          </Stack>
+        </PurchaseProvider>
       )}
     </SafeAreaProvider>
   );

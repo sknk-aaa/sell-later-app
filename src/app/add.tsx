@@ -21,7 +21,7 @@ export default function AddScreen() {
       Alert.alert('入力が不足しています', '商品名・カテゴリ・見込み売却価格は必須です。');
       return;
     }
-    await addItem(sub.values, sub.photo);
+    await addItem(sub.values, sub.photos);
     if (keepOpen) {
       setFormKey((k) => k + 1); // フォームを初期化して続けて追加
     } else {
@@ -37,7 +37,7 @@ export default function AddScreen() {
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
       >
-        <ProductForm key={formKey} ref={formRef} />
+        <ProductForm key={formKey} ref={formRef} onRequestPro={() => router.push('/paywall')} />
         <View style={styles.actions}>
           <Button label="保存" variant="primary" block onPress={() => save(false)} />
           <Button label="続けてもう1つ追加" variant="ghost" block textColor={colors.primary} onPress={() => save(true)} style={{ marginTop: 10 }} />

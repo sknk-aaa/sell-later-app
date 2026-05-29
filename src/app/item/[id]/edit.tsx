@@ -26,7 +26,7 @@ export default function EditScreen() {
     );
   }
 
-  const initialPhoto: PhotoValue = vm.imagePath ? { kind: 'existing', path: vm.imagePath } : { kind: 'none' };
+  const initialPhotos: PhotoValue[] = vm.imagePaths.map((path) => ({ kind: 'existing', path }));
 
   const save = async () => {
     const sub = formRef.current?.getSubmission();
@@ -34,7 +34,7 @@ export default function EditScreen() {
       Alert.alert('入力が不足しています', '商品名・カテゴリ・見込み売却価格は必須です。');
       return;
     }
-    await updateItem(vm.id, sub.values, sub.photo);
+    await updateItem(vm.id, sub.values, sub.photos);
     router.back();
   };
 
@@ -59,7 +59,8 @@ export default function EditScreen() {
             status: vm.status,
             memo: vm.memo,
           }}
-          initialPhoto={initialPhoto}
+          initialPhotos={initialPhotos}
+          onRequestPro={() => router.push('/paywall')}
         />
         <View style={styles.actions}>
           <Button label="保存" variant="primary" block onPress={save} />

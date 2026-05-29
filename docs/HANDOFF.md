@@ -1,6 +1,6 @@
 # 開発引き継ぎメモ（sell-later-app）
 
-セッションが途切れても次の担当が再開できるよう、現状と要点をまとめる。最終更新時点で **STEP1〜3 完了・実機確認済み**。残りは **STEP4（課金・広告・リリース準備）**。
+セッションが途切れても次の担当が再開できるよう、現状と要点をまとめる。最終更新時点で **STEP1〜4 のコード実装完了**（STEP1〜3は実機確認済み）。残りは **STEP4のユーザー作業**（Apple/AdMobアカウント・GitHub Secrets）→ [docs/RELEASE_SETUP.md](RELEASE_SETUP.md)。
 
 ## 1. アプリ概要
 「いつかメルカリで売る物」を管理するiOSアプリ。家にある売れる物を資産として見える化し、ホームで「全部売ったらいくらか」を示す。設計書は [docs/sellitlater_design_v1.md](sellitlater_design_v1.md)、実装指示は [docs/02_claude_code_instructions.md](02_claude_code_instructions.md)。UIは Claude Design プロトタイプを React Native へ忠実移植したもの。
@@ -8,6 +8,7 @@
 ## 2. 技術スタックと**固定バージョン（重要）**
 - Expo **SDK 54**（expo ~54.0.35 / expo-router 6 / react-native 0.81.5 / react 19.1.0）/ TypeScript ~5.9.2
 - expo-sqlite + **Drizzle ORM** / Zustand / expo-file-system(新File/Directory/Paths API) / expo-image-picker / react-native-svg / @react-native-community/datetimepicker
+- STEP4追加: **react-native-iap**(課金) / **react-native-google-mobile-ads**(広告) / expo-splash-screen。これらはネイティブ依存で**Expo Goに無い** → `src/utils/env.ts` の `isExpoGo` で**Expo Go時はno-op化**して起動を維持（実動作はdev build/TestFlight）。
 - **⚠️ Expo SDK を勝手に上げない**。開発確認に使う端末の **Expo Go が 54.0.2（SDK54まで）** のため。最初56で組んでGoに弾かれ、56→55→54 と下げて一致させた経緯あり。SDK更新時は必ず端末のExpo Go対応SDKを先に確認する。
 
 ## 3. 起動・確認方法
@@ -59,8 +60,14 @@ types/sql.d.ts             .sql inline-import 用の型宣言
 - 詳細の「分析を見る」は分析タブへ遷移するのみ。
 - **ビルド/配信は GitHub Actions(macOS) + fastlane（prebuild方式・EAS非依存）**。STEP4で実装。Expo Go はあくまで開発確認用で、STEP4で native依存(iap/admob)が入ると dev client に移行する。
 
-## 9. 残り（STEP4 予定）
-react-native-iap（買い切り1,500円＋サブスク月額480円）/ Pro判定(Setting.isPro)と制限（21件超でアップグレード誘導・写真2枚目以降ロック・分析ロック）/ AdMobバナー（無料版のみ）/ アプリアイコン・スプラッシュ / App Storeメタデータ / `expo prebuild --platform ios`（ios/ をGit管理）/ fastlane(match/pilot, Fastfile build/beta) / `.github/workflows/ios.yml`（macos-latest, main push/タグ, Secrets: MATCH_PASSWORD / MATCH_GIT_BASIC_AUTHORIZATION / App Store Connect API Key関連）。詳細は設計書6章 STEP4。
+## 9. STEP4（実装済みコード）
+- 課金: `src/purchases/`（products.ts のSKU、PurchaseProvider が `useIAP` で購入/復元、isProをsettingsへ反映。Expo Goでは no-op）。買い切り¥1,500=`com.selllater.app.pro.lifetime` / 月額¥500=`com.selllater.app.pro.monthly`。
+- Pro制限: `src/utils/limits.ts`。21件超で `/paywall`（[TabBar](../src/components/TabBar.tsx)・[list](../src/app/(tabs)/list.tsx)）、写真2枚目ロック（[ImageField](../src/components/ImageField.tsx)）、分析ロック（[analytics](../src/app/(tabs)/analytics.tsx)）。ペイウォール=[paywall.tsx](../src/app/paywall.tsx)。
+- 写真複数枚: 無料1/Pro10（ProductForm/ImageField/useItemStore/selectors/詳細カルーセル）。
+- 広告: `src/ads/`＋[AdBanner](../src/components/AdBanner.tsx)。無料&非Expo Goのみ、現状Googleテストユニット。home/list下部。
+- アイコン/スプラッシュ: `scripts/gen-assets.js`（依存なしPNG生成）→ `assets/`（青基調プレースホルダ）。
+- CI: `ios/`は非コミット。`.github/workflows/ios.yml` が macos-latest で `npm ci`→`expo prebuild`→`pod-install`→`fastlane ios beta`。fastlane=リポジトリ直下 `Gemfile`/`fastlane/{Appfile,Matchfile,Fastfile}`（match→gym→pilot、workspace/schemeは自動検出）。
+- **残り=ユーザー作業のみ**: Apple/ASC・IAP製品・AdMob ID・match用リポジトリ・ASC APIキー・GitHub Secrets。手順は [docs/RELEASE_SETUP.md](RELEASE_SETUP.md)。
 
 ## 10. Git運用
 - 変更後は原則コミット（日本語メッセージ）、**push はユーザーが行う**。

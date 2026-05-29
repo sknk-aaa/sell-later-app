@@ -44,8 +44,8 @@ type ItemState = {
   sales: SaleRecord[];
   loaded: boolean;
   load: () => void;
-  addItem: (input: ItemInput, photo: PhotoValue) => Promise<string>;
-  updateItem: (id: string, input: ItemInput, photo: PhotoValue) => Promise<void>;
+  addItem: (input: ItemInput, photos: PhotoValue[]) => Promise<string>;
+  updateItem: (id: string, input: ItemInput, photos: PhotoValue[]) => Promise<void>;
   deleteItem: (id: string) => void;
   toggleFavorite: (id: string) => void;
   recordSale: (
@@ -63,15 +63,19 @@ const refresh = () => ({
   loaded: true,
 });
 
-// 写真を永続化して item_images を張り替える
-async function syncImage(itemId: string, photo: PhotoValue, now: Date) {
-  if (photo.kind === 'existing') return; // 変更なし
-  // 既存画像（ファイル＋レコード）を削除
-  for (const img of getImagesByItem(itemId)) deleteImageFile(img.filePath);
+// 写真配列で item_images を張り替える（既存維持・新規保存・削除を差分処理）
+async function syncImages(itemId: string, photos: PhotoValue[], now: Date) {
+  const keepPaths = new Set(photos.filter((p) => p.kind === 'existing').map((p) => (p as { path: string }).path));
+  // 残さない既存ファイルを削除
+  for (const img of getImagesByItem(itemId)) {
+    if (!keepPaths.has(img.filePath)) deleteImageFile(img.filePath);
+  }
   deleteImagesByItem(itemId);
-  if (photo.kind === 'new') {
-    const path = await persistImage(photo.uri);
-    insertImage({ id: Crypto.randomUUID(), itemId, filePath: path, sortOrder: 0, createdAt: now });
+  let order = 0;
+  for (const photo of photos) {
+    const path = photo.kind === 'existing' ? photo.path : photo.kind === 'new' ? await persistImage(photo.uri) : null;
+    if (!path) continue;
+    insertImage({ id: Crypto.randomUUID(), itemId, filePath: path, sortOrder: order++, createdAt: now });
   }
 }
 
@@ -83,23 +87,20 @@ export const useItemStore = create<ItemState>((set) => ({
 
   load: () => set(refresh()),
 
-  addItem: async (input, photo) => {
+  addItem: async (input, photos) => {
     const id = Crypto.randomUUID();
     const now = new Date();
     const row: NewItem = { id, ...input, isFavorite: false, createdAt: now, updatedAt: now };
     insertItem(row);
-    if (photo.kind === 'new') {
-      const path = await persistImage(photo.uri);
-      insertImage({ id: Crypto.randomUUID(), itemId: id, filePath: path, sortOrder: 0, createdAt: now });
-    }
+    await syncImages(id, photos, now);
     set(refresh());
     return id;
   },
 
-  updateItem: async (id, input, photo) => {
+  updateItem: async (id, input, photos) => {
     const now = new Date();
     updateItemRow(id, { ...input, updatedAt: now });
-    await syncImage(id, photo, now);
+    await syncImages(id, photos, now);
     set(refresh());
   },
 

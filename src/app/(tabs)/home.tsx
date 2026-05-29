@@ -6,6 +6,7 @@ import { StatusBadge } from '@/components/StatusBadge';
 import { PhotoSlot } from '@/components/PhotoSlot';
 import { Card, SectionHead } from '@/components/ui';
 import { Donut } from '@/components/charts/Donut';
+import { AdBanner } from '@/components/AdBanner';
 import { LargeTitleHeader } from '@/components/headers';
 import { useHomeSummary } from '@/stores/selectors';
 import { colors, numFont, shadowCard, type StatusKind } from '@/theme/tokens';
@@ -124,6 +125,8 @@ export default function HomeScreen() {
             ))}
           </ScrollView>
         )}
+
+        <AdBanner />
       </ScrollView>
     </View>
   );

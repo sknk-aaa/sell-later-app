@@ -1,0 +1,7 @@
+# 証明書・プロビジョニングプロファイルを管理する「別の」プライベートGitリポジトリを指定する。
+# 例: git@github.com:youraccount/certificates.git
+git_url(ENV["MATCH_GIT_URL"])
+storage_mode("git")
+type("appstore")
+app_identifier([ENV["APP_IDENTIFIER"] || "com.selllater.app"])
+readonly(true)

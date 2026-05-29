@@ -11,6 +11,7 @@ type SettingsState = {
   load: () => void;
   setFeeRate: (rate: number) => void;
   setTheme: (theme: Setting['theme']) => void;
+  setPro: (value: boolean) => void;
 };
 
 export const useSettingsStore = create<SettingsState>((set) => ({
@@ -29,5 +30,9 @@ export const useSettingsStore = create<SettingsState>((set) => ({
   setTheme: (theme) => {
     updateSettings({ theme });
     set({ theme });
+  },
+  setPro: (value) => {
+    updateSettings({ isPro: value });
+    set({ isPro: value });
   },
 }));

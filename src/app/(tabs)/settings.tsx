@@ -22,6 +22,7 @@ export default function SettingsScreen() {
   const router = useRouter();
   const theme = useSettingsStore((s) => s.theme);
   const setTheme = useSettingsStore((s) => s.setTheme);
+  const isPro = useSettingsStore((s) => s.isPro);
   const clearAllData = useItemStore((s) => s.clearAllData);
   const [themeOpen, setThemeOpen] = React.useState(false);
 
@@ -47,12 +48,16 @@ export default function SettingsScreen() {
         <Card style={styles.proCard}>
           <View style={styles.proIcon}><Icon name="crown" size={32} color={colors.star} /></View>
           <View style={{ flex: 1 }}>
-            <Text style={styles.proTitle}>Proプラン</Text>
-            <Text style={styles.proSub} numberOfLines={1}>広告を非表示にして、より便利に使えます</Text>
+            <Text style={styles.proTitle}>{isPro ? 'Proプラン 利用中' : 'Proプラン'}</Text>
+            <Text style={styles.proSub} numberOfLines={1}>
+              {isPro ? '広告非表示・写真複数枚・分析が使えます' : '広告を非表示にして、より便利に使えます'}
+            </Text>
           </View>
-          <Pressable style={styles.proBtn} onPress={() => notReady('Proプラン')}>
-            <Text style={styles.proBtnText}>プランを確認</Text>
-          </Pressable>
+          {!isPro && (
+            <Pressable style={styles.proBtn} onPress={() => router.push('/paywall')}>
+              <Text style={styles.proBtnText}>プランを確認</Text>
+            </Pressable>
+          )}
         </Card>
 
         <SectionTitle>アカウント・データ</SectionTitle>
