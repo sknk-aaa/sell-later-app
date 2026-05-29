@@ -48,12 +48,14 @@ export default function HomeScreen() {
             <SummaryStat icon="chartLine" iconBg="rgba(16,185,129,0.12)" iconColor={colors.profit} label="想定利益合計" value={yen(summary.expectedProfitTotal)} profit />
           </View>
           <View style={styles.summaryDivider} />
-          <View style={styles.row10}>
-            <MiniStat icon="bag" color={colors.statusListed} bg={colors.statusListedBg} label="出品中" value={`${summary.statusCounts.listed}件`} />
-            <MiniStat icon="clock" color={colors.statusPrep} bg={colors.statusPrepBg} label="出品準備中" value={`${summary.statusCounts.prep}件`} />
-            <MiniStat icon="archive" color={colors.ink3} bg="#EEF0F4" label="保管中" value={`${summary.statusCounts.stored}件`} />
-            <MiniStat icon="checkCircle" color={colors.profit} bg={colors.statusSoldBg} label="売却済み利益" value={yen(summary.soldProfitTotal)} small />
-          </View>
+          <SummaryStat
+            icon="checkCircle"
+            iconBg={colors.statusSoldBg}
+            iconColor={colors.profit}
+            label="売却済み利益"
+            value={yen(summary.soldProfitTotal)}
+            profit
+          />
         </Card>
 
         {/* ステータス別 */}
@@ -144,16 +146,6 @@ function SummaryStat({ icon, iconBg, iconColor, label, value, profit }: { icon: 
   );
 }
 
-function MiniStat({ icon, color, bg, label, value, small }: { icon: IconName; color: string; bg: string; label: string; value: string; small?: boolean }) {
-  return (
-    <View style={styles.miniStat}>
-      <View style={[styles.miniIcon, { backgroundColor: bg }]}><Icon name={icon} size={18} color={color} /></View>
-      <Text style={styles.miniLabel} numberOfLines={1}>{label}</Text>
-      <Text style={[styles.miniValue, { fontSize: small ? 13 : 15 }]} numberOfLines={1}>{value}</Text>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg },
 
@@ -162,17 +154,11 @@ const styles = StyleSheet.create({
   summarySub: { fontSize: 11, color: colors.ink3 },
   row16: { flexDirection: 'row', gap: 16, marginBottom: 16 },
   summaryDivider: { height: 1, backgroundColor: colors.divider, marginTop: 4, marginBottom: 14 },
-  row10: { flexDirection: 'row', gap: 10 },
 
   summaryStat: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10 },
   summaryIcon: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   summaryStatLabel: { fontSize: 11, color: colors.ink3, marginBottom: 2 },
   summaryStatValue: { fontSize: 22, fontWeight: '700', color: colors.ink1, ...numFont },
-
-  miniStat: { flex: 1, alignItems: 'center', gap: 4 },
-  miniIcon: { width: 32, height: 32, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
-  miniLabel: { fontSize: 11, color: colors.ink3 },
-  miniValue: { fontWeight: '700', color: colors.ink1, ...numFont },
 
   statusRow: { flexDirection: 'row', gap: 6 },
   statusCol: { flex: 1, alignItems: 'center', gap: 6 },
