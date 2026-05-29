@@ -1,6 +1,8 @@
 # リリース設定手順（STEP4・ユーザー作業）
 
-コード/CI設定は実装済み。**TestFlight配信・課金・広告の実動作**には、以下のアカウント作成とシークレット登録が必要。ここが完了すると GitHub Actions（main push / `v*` タグ）でビルド→TestFlight自動配信が動く。
+> **状態（2026-05-30）: 下記セットアップは完了済み。GitHub Actions → TestFlight 初回配信に成功**。本書は再セットアップ／引き継ぎ用の記録として残す。Secrets・証明書・RevenueCat・ASC設定は登録済み（詳細は [HANDOFF.md](HANDOFF.md) 11章・12章）。
+
+コード/CI設定は実装済み。**TestFlight配信・課金・広告の実動作**には、以下のアカウント作成とシークレット登録が必要。これが完了すると GitHub Actions（main push / `v*` タグ / 手動 Run）でビルド→TestFlight自動配信が動く。
 
 ## 0. 重要な前提
 - **Expo Go では課金/広告は動かない**（ネイティブ依存）。ただしアプリは起動する（課金/広告のみ無効化）。課金・広告・最終ビルドは **dev build または TestFlight** で確認する。
@@ -45,7 +47,8 @@
 ## 5. App Store Connect API Key
 App Store Connect → Users and Access → Integrations → API Keys で Key を発行:
 - `.p8` ファイル、`Key ID`、`Issuer ID` を取得。
-- `.p8` は base64 化して Secret に入れる: `base64 -i AuthKey_XXXX.p8 | pbcopy`
+- Secret `APP_STORE_CONNECT_API_KEY` には **`.p8` の生PEM中身をそのまま貼る**（`-----BEGIN PRIVATE KEY-----` ごと）。**base64文字列でも可**（ワークフローの「Prepare ASC API key」が両対応し `openssl` で `KEY OK` を検証）。
+- 発行済み: `AuthKey_GSFCH87D9K.p8`（Key ID `GSFCH87D9K`）。`.p8` はコミット禁止（`*.p8` は `.gitignore` 済み）。
 
 ## 6. GitHub Secrets 登録
 リポジトリ Settings → Secrets and variables → Actions:
@@ -61,9 +64,10 @@ App Store Connect → Users and Access → Integrations → API Keys で Key を
 | `EXPO_PUBLIC_REVENUECAT_IOS_KEY` | RevenueCat の iOS公開SDKキー（`appl_xxx`） |
 
 ## 7. 配信
-- `main` に push、または `v1.0.0` のようなタグを作成すると `.github/workflows/ios.yml` が起動。
-- 手順: `npm ci` → `expo prebuild` → `pod-install` → `fastlane ios beta`（match→gym→pilotでTestFlightへ）。
-- 成功すると TestFlight に表示される（処理待ちは数分〜十数分）。
+- `main` に push、または `v1.0.0` のようなタグ作成、または手動 Run で `.github/workflows/ios.yml`（`runs-on: macos-26`）が起動。
+- 手順: `npm ci` → `expo prebuild` → `pod install` → `fastlane ios beta`（match→gym→pilotでTestFlightへ）。ビルド番号は `GITHUB_RUN_NUMBER` で自動採番。
+- 成功すると TestFlight に表示される（Apple側の処理待ちは数分〜十数分）。
+- **証明書の初回作成**だけは別ワークフロー「iOS Certificates (one-time setup)」を1回手動実行（実施済み）。証明書を作り直す時以外は不要。
 
 ## 8. 動作確認（実機）
 - TestFlightビルドで: 広告バナー表示（無料時）、21件目で誘導、写真複数枚（Pro）、分析ロック/解放、買い切り・月額の購入と復元、購入後 isPro が反映され広告非表示。

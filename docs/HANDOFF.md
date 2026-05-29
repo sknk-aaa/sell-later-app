@@ -1,6 +1,6 @@
 # 開発引き継ぎメモ（sell-later-app）
 
-セッションが途切れても次の担当が再開できるよう、現状と要点をまとめる。最終更新時点で **STEP1〜4 のコード実装完了**（STEP1〜3は実機確認済み）。現在は **CIでのTestFlight初回配信をデバッグ中** → **最新状況は末尾「12. リリースCIの現在地」を最初に読む**こと。
+セッションが途切れても次の担当が再開できるよう、現状と要点をまとめる。最終更新時点で **STEP1〜4 のコード実装完了**（STEP1〜3は実機確認済み）。**GitHub Actions → TestFlight の初回配信に成功し、CI自動配信パイプラインが完成（2026-05-30）**。ビルド `1.0.0 (1)` が TestFlight に上がり、内部テスターの実機へインストール済み。→ **現状と残タスクは末尾「12. リリースCIの現在地」を読む**こと。
 
 ## 1. アプリ概要
 「いつかメルカリで売る物」を管理するiOSアプリ。家にある売れる物を資産として見える化し、ホームで「全部売ったらいくらか」を示す。設計書は [docs/sellitlater_design_v1.md](sellitlater_design_v1.md)、実装指示は [docs/02_claude_code_instructions.md](02_claude_code_instructions.md)。UIは Claude Design プロトタイプを React Native へ忠実移植したもの。
@@ -66,8 +66,8 @@ types/sql.d.ts             .sql inline-import 用の型宣言
 - 写真複数枚: 無料1/Pro10（ProductForm/ImageField/useItemStore/selectors/詳細カルーセル）。
 - 広告: `src/ads/`＋[AdBanner](../src/components/AdBanner.tsx)。無料&非Expo Goのみ、現状Googleテストユニット。home/list下部。
 - アイコン/スプラッシュ: `scripts/gen-assets.js`（依存なしPNG生成）→ `assets/`（青基調プレースホルダ）。
-- CI: `ios/`は非コミット。`.github/workflows/ios.yml` が macos-latest で `npm ci`→`expo prebuild`→`pod-install`→`fastlane ios beta`。fastlane=リポジトリ直下 `Gemfile`/`fastlane/{Appfile,Matchfile,Fastfile}`（match→gym→pilot、workspace/schemeは自動検出）。
-- **残り=ユーザー作業のみ**: Apple/ASC・IAP製品・AdMob ID・match用リポジトリ・ASC APIキー・GitHub Secrets。手順は [docs/RELEASE_SETUP.md](RELEASE_SETUP.md)。
+- CI: `ios/`は非コミット。`.github/workflows/ios.yml` が **macos-26（Xcode 26 / iOS 26 SDK 必須に対応）** で `npm ci`→`expo prebuild`→`pod install`→ASCキー復元→match検証→`fastlane ios beta`。fastlane=リポジトリ直下 `Gemfile`/`fastlane/{Appfile,Matchfile,Fastfile}`（match→gym→pilot、workspace/schemeは自動検出）。`fastlane/Fastfile` の要点: `before_all` で `setup_ci`（CI時の一時キーチェーン）、`build` レーンで `update_code_signing_settings`（手動署名・APPLE_TEAM_ID・matchプロファイル）＋ gym の `xcargs` でビルド番号=`GITHUB_RUN_NUMBER`。
+- 証明書セットアップ用に `.github/workflows/ios-certs.yml`（`fastlane ios certs`＝match `readonly:false`）あり。**初回1回だけ手動実行済み**（配布証明書 `82CTL825DG` / プロファイル `match AppStore com.selllater.app` を certificates リポに保存済み）。再発行が必要な時以外は実行不要。
 
 ## 10. Git運用
 - 変更後は原則コミット（日本語メッセージ）、**push はユーザーが行う**。
@@ -80,24 +80,23 @@ types/sql.d.ts             .sql inline-import 用の型宣言
 - ASC API キー発行（fastlane/RevenueCat用）: ファイル `AuthKey_GSFCH87D9K.p8`、**Key ID `GSFCH87D9K`**。
 - GitHub Secrets（8つ）登録済み: `EXPO_PUBLIC_REVENUECAT_IOS_KEY` / `APPLE_TEAM_ID` / `MATCH_GIT_URL` / `MATCH_PASSWORD` / `MATCH_GIT_BASIC_AUTHORIZATION` / `APP_STORE_CONNECT_API_KEY_ID`(=GSFCH87D9K) / `APP_STORE_CONNECT_API_ISSUER_ID` / `APP_STORE_CONNECT_API_KEY`（= .p8の生PEM中身）。
 
-## 12. リリースCIの現在地（★次セッションはここから）
-GitHub Actions で初回TestFlight配信をデバッグ中。CIの通過順に潰してきた:
-1. ✅ workspace検出（アプリ名が日本語のためExpoがプロジェクト名を `app` に採用 → `ios/app.xcworkspace`。Fastfileは `__dir__` 基準の絶対パスで検出）。
-2. ✅ ASC APIキー読込（`invalid curve name`は解消。Secretは**生PEMの.p8中身**を入れる方式。ワークフローの「Prepare ASC API key」が `KEY OK` を確認）。
-3. ⛔ **現在の詰まり = match の証明書リポジトリ clone 失敗**。「iOS Certificates (one-time setup)」を実行すると **`GIT AUTH FAILED`**。
+## 12. リリースCIの現在地
 
-**次の一手（やること）:**
-- まず未pushコミットがあるので **`git push`**（最新コミット `ci: match git検証を詳細化…`）。
-- GitHub → Actions → **「iOS Certificates (one-time setup)」→ Run workflow**（branch=main）を実行。
-- 「Verify match git access」ステップの3行を読む:
-  - `URL format:` … `MATCH_GIT_URL` が `https://github.com/sknk-aaa/certificates.git` 形式か（SSHや`.git`無しはNG）
-  - `BASIC_AUTH:` … `MATCH_GIT_BASIC_AUTHORIZATION` が `user:token` にデコードできるか（不正なら `echo -n "sknk-aaa:ghp_..." | base64 -w0` で作り直し）
-  - `--- git ls-remote ---` 下のエラー … `404/Repository not found`=certificatesリポジトリ未作成かURL違い、`401/403`=トークン権限不足（classic `repo` スコープ要、`certificates`にアクセスできること）
-- 上記で原因を直す（多くは①certificates空privateリポジトリ未作成、②BASIC_AUTHのbase64ミス、③トークン権限）。
-- `GIT AUTH OK` になれば「iOS Certificates」が証明書を生成・保存 → 次に **「iOS TestFlight」を再実行**（push or 失敗RunのRe-run）→ gym→pilotでTestFlight配信、が通る想定。
+**✅ GitHub Actions → TestFlight 初回配信に成功（2026-05-30）。** `main` への push（または `v*` タグ・手動 Run）で `ios.yml` が走り、ビルド→TestFlight 自動アップロードが通る状態。ビルド `1.0.0 (1)` が TestFlight に上がり、内部テスター「売るもの管理テスター」の実機にインストール済み。
 
-**CI通過後の残タスク:**
-- AdMob本番ID差し替え（`app.json` の `react-native-google-mobile-ads` `iosAppId` と `src/ads/AdBannerNative.tsx` の `BANNER_UNIT_ID`。現状GoogleテストID）。
-- ストア掲載名の確定（App Store Connect入力。ホーム表示名は `app.json` の `name`）。
-- 本番アイコン/スプラッシュ差し替え（`assets/`）。
-- TestFlight実機で購入(サンドボックス)・広告・Pro制限・複数写真の最終確認。
+### CIで踏んだ問題と解決（同種の再発時の参考）
+1. **workspace検出** … 日本語アプリ名のためExpoがプロジェクト名を `app` に採用 → `ios/app.xcworkspace`。Fastfileは `__dir__` 基準の絶対パスで検出。
+2. **ASC APIキー読込** … Secret `APP_STORE_CONNECT_API_KEY` は**生PEMの.p8中身**（base64でも可。ワークフローが両対応し `openssl` で `KEY OK` 検証）。
+3. **match の git 認証** … `MATCH_GIT_BASIC_AUTHORIZATION` は `base64("sknk-aaa:<PAT>")`。トークン値ミスで `GIT AUTH FAILED`/`Repository not found` が続いた → WSLで `curl -H "Authorization: Bearer <PAT>" https://api.github.com/user`＝200、base64のround-trip検証してから Secret 再設定で解決。検証stepの `git ls-remote` は `actions/checkout` の認証ヘッダと衝突するため **`cd $RUNNER_TEMP` でリポ外実行**（`http.extraheader` のみ付与）。
+4. **証明書作成** … 「iOS Certificates」ワークフロー（`fastlane ios certs`）を1回実行して配布証明書＋プロファイルを certificates リポに保存（初回のみ）。
+5. **gym archive 失敗 `Signing requires a development team`** … prebuild生成プロジェクトが自動署名・チーム空のため → `update_code_signing_settings`（自動署名OFF・APPLE_TEAM_ID・matchプロファイル）＋ gym `export_options`(signingStyle manual) で手動署名化。
+6. **codesign ハング（40分超でタイムアウト）** … login.keychain の署名UIダイアログ待ち → Fastfile `before_all { setup_ci if ENV["CI"] }`（一時キーチェーン）で解消。
+7. **アップロードで `Validation failed (409) SDK version issue`** … Apple が iOS 26 SDK / Xcode 26 必須化 → ランナーを `runs-on: macos-26` ＋「最新Xcode選択step」に変更。
+8. **ビルド番号重複対策** … gym `xcargs: CURRENT_PROJECT_VERSION=$GITHUB_RUN_NUMBER` で毎回自動採番。
+
+### 残タスク
+- **実機での最終動作確認（TestFlight）**: 購入（RevenueCatサンドボックス＝ASCのSandboxテスターでサインイン）・広告バナー（無料時／現状テスト広告）・Pro制限（21件超・写真2枚目ロック・分析ロック）・複数写真。
+- **AdMob本番ID差し替え**: `app.json` の `react-native-google-mobile-ads` `iosAppId` と `src/ads/AdBannerNative.tsx` の `BANNER_UNIT_ID`（現状Googleテスト）。※審査までテストIDのまま。
+- **ストア掲載名の確定**（App Store Connect入力。ホーム表示名は `app.json` の `name`＝「売るもの管理」）。
+- **本番アイコン/スプラッシュ差し替え**（`assets/`、現状 `scripts/gen-assets.js` の青プレースホルダ）。
+- 配信運用: 日常のJS修正は Expo Go で即確認、ネイティブ確認・配信時のみ push→CI。`sell-later-app` リポは **public** なので Actions は無料・無制限。RN Releaseビルドは1回10〜30分。
