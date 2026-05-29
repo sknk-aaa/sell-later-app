@@ -100,3 +100,4 @@ types/sql.d.ts             .sql inline-import 用の型宣言
 - **ストア掲載名の確定**（App Store Connect入力。ホーム表示名は `app.json` の `name`＝「売るもの管理」）。
 - **本番アイコン/スプラッシュ差し替え**（`assets/`、現状 `scripts/gen-assets.js` の青プレースホルダ）。
 - 配信運用: 日常のJS修正は Expo Go で即確認、ネイティブ確認・配信時のみ push→CI。`sell-later-app` リポは **public** なので Actions は無料・無制限。RN Releaseビルドは1回10〜30分。
+- **他アプリへ再現する手順は [docs/IOS_CICD_RECIPE.md](IOS_CICD_RECIPE.md) に一般化してまとめた**（Mac無し・無料でTestFlight配信。設定ファイル全文＋ハマり所と解決の一覧）。
