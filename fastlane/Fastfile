@@ -12,9 +12,11 @@ platform :ios do
     )
   end
 
-  # expo prebuild が生成した workspace / scheme を自動検出
+  # expo prebuild が生成した workspace / scheme を自動検出（カレントに依存せずFastfile基準で解決）
   def detect_workspace
-    Dir["ios/*.xcworkspace"].first or UI.user_error!("ios/*.xcworkspace が見つかりません。先に expo prebuild を実行してください")
+    root = File.expand_path("..", __dir__)
+    Dir[File.join(root, "ios", "*.xcworkspace")].first or
+      UI.user_error!("ios/*.xcworkspace が見つかりません。先に expo prebuild + pod install を実行してください")
   end
 
   desc "証明書/プロファイルを作成しmatchリポジトリへ保存（初回セットアップ・1回だけ実行）"
