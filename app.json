@@ -20,7 +20,6 @@
     },
     "plugins": [
       "expo-router",
-      "expo-status-bar",
       "expo-sqlite",
       [
         "expo-image-picker",
