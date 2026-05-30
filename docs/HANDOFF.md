@@ -3,10 +3,13 @@
 セッションが途切れても再開できるよう、**今どこまで進んでいて・何が残っているか**をまとめる。毎セッション更新する唯一の場所。仕様は [DESIGN.md](DESIGN.md)、インフラ・配信・固有設定値は [OPERATIONS.md](OPERATIONS.md)。
 
 ## 現在地（最終更新: 2026-05-30）
-- **STEP1〜4 のコード実装完了**、**GitHub Actions → TestFlight 初回配信成功（ビルド `1.0.0 (1)`）**。CI自動配信パイプライン完成。
+- **App Store 審査提出済み（v1.0.0）。審査結果待ち。**
+- STEP1〜4 のコード実装完了。GitHub Actions → TestFlight 自動配信パイプライン稼働中。
 - 海外展開ピボット（i18n英日 / 多通貨セント保存 / 商品ごと手数料）実装済み。ブランド名 `Worthnest`（海外）/「うるカタ」（日本表示名）。
-- オンボーディング・キーボード追従（keyboard-controller）・入力摩擦低減・UI調整 完了。
-- **リリース準備中**。次は最新ビルドのpush → TestFlight実機確認。
+- オンボーディング・キーボード追従（keyboard-controller）・入力摩擦低減・設定ページ再構成・分析グラフ修正 完了。
+- ストア掲載文・キーワード（英日）は [ASO_STORE_LISTING.md](ASO_STORE_LISTING.md)。カテゴリ=ユーティリティ/ショッピング。
+- プライバシーポリシー: GitHub Pages（`docs/` 配下、index.html + privacy-policy.html）。
+- 設定: プライマリ言語=英語 / iPad非対応（supportsTablet=false）/ 縦固定。
 
 ## ディレクトリ構成（src/）
 ```
@@ -31,11 +34,11 @@ purchases/                 RevenueCat   ads/ AdMob
 ```
 - Drizzle migration は 0000〜0007（0004=金額×100移行 / 0006=カテゴリキー化 / 0007=onboarding_done）。データモデル詳細は [DESIGN.md](DESIGN.md)。
 
-## 残タスク（リリースまで）
-- **最新ビルドのpush → TestFlight実機確認**: オンボ初回表示 / キーボード追従 / 購入（Sandbox）/ 広告バナー / Pro制限（21件超・写真2枚目・分析ロック）/ 英語ロケール表示。
-- **App Store スクリーンショット**（ユーザー作業。6.5インチ必須・各ロケール）。
-- **AdMob本番ID差し替え**（審査までテストIDのまま。差し替え箇所は [OPERATIONS.md](OPERATIONS.md)）。
-- GitHub Pages 有効化（プライバシーポリシーURL。設定は [OPERATIONS.md](OPERATIONS.md)）。
+## 残タスク
+- **審査結果待ち**。リジェクトされたら理由に対応して再提出。
+- **承認後: AdMob本番ID差し替え**（現状テストID。差し替え箇所は [OPERATIONS.md](OPERATIONS.md)）→ 再ビルド・再提出。
+- 「売却済みにする」ボタンのわかりにくさ改善（相談ペンディング）。
+- 完了済み（参考）: 実機確認（オンボ/キーボード追従/購入Sandbox/広告/Pro制限/英ロケール）、スクショ、掲載文入力、GitHub Pages。
 
 ## 既知の方針・意図的な未対応
 - **テーマはライト描画固定**。light/dark/system の選択・保存はするが、ダークの実配色適用は後日。
