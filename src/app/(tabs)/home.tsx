@@ -41,15 +41,16 @@ export default function HomeScreen() {
           }
         />
 
-        {/* Asset summary — hero */}
-        <Card style={{ paddingTop: 22, paddingBottom: 20 }}>
-          <Text style={styles.heroLabel}>{t('home.hero')}</Text>
-          <Text style={styles.heroValue} numberOfLines={1} adjustsFontSizeToFit>
-            {fmt(summary.expectedSalesTotal)}
-          </Text>
-          <Text style={styles.heroSub}>
-            {t('home.heroProfit')} <Text style={styles.heroSubNum}>{fmt(summary.expectedProfitTotal)}</Text>
-          </Text>
+        {/* Asset summary card */}
+        <Card style={{ paddingBottom: 20 }}>
+          <View style={styles.summaryHead}>
+            <Text style={styles.summaryTitle}>{t('home.summary')}</Text>
+            <Text style={styles.summarySub}>{t('home.summarySubtitle')}</Text>
+          </View>
+          <View style={styles.row16}>
+            <SummaryStat icon="tag" iconBg={colors.primarySoft} iconColor={colors.primary} label={t('home.totalSales')} value={fmt(summary.expectedSalesTotal)} />
+            <SummaryStat icon="chartLine" iconBg="rgba(16,185,129,0.12)" iconColor={colors.profit} label={t('home.totalProfit')} value={fmt(summary.expectedProfitTotal)} profit />
+          </View>
           <View style={styles.summaryDivider} />
           <SummaryStat
             icon="checkCircle"
@@ -152,12 +153,11 @@ function SummaryStat({ icon, iconBg, iconColor, label, value, profit }: { icon: 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg },
 
+  summaryHead: { flexDirection: 'row', alignItems: 'baseline', gap: 8, marginBottom: 14 },
+  summaryTitle: { fontSize: 17, fontWeight: '700', color: colors.ink1 },
+  summarySub: { fontSize: 11, color: colors.ink3 },
+  row16: { flexDirection: 'row', gap: 16, marginBottom: 16 },
   summaryDivider: { height: 1, backgroundColor: colors.divider, marginTop: 4, marginBottom: 14 },
-
-  heroLabel: { fontSize: 13, color: colors.ink3, textAlign: 'center', marginBottom: 6 },
-  heroValue: { fontSize: 42, fontWeight: '800', color: colors.ink1, textAlign: 'center', letterSpacing: -1, ...numFont },
-  heroSub: { fontSize: 13, color: colors.ink3, textAlign: 'center', marginTop: 8 },
-  heroSubNum: { color: colors.profit, fontWeight: '700', ...numFont },
 
   summaryStat: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10 },
   summaryIcon: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },

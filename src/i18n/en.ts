@@ -102,8 +102,6 @@ export const en = {
   home: {
     summary: 'Asset Summary',
     summarySubtitle: 'If everything were sold',
-    hero: 'If you sold everything',
-    heroProfit: 'Est. profit',
     totalSales: 'Est. Total Sales',
     totalProfit: 'Est. Total Profit',
     soldProfit: 'Sold Profit',
