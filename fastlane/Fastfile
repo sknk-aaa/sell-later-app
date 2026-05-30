@@ -43,7 +43,14 @@ platform :ios do
       code_sign_identity: "Apple Distribution",
       profile_name: profile_name
     )
+    # ビルド番号を自動採番。Expo生成のInfo.plistはCFBundleVersionが固定値のため
+    # xcargs(CURRENT_PROJECT_VERSION)では効かない → Info.plistを直接書き換える
     build_no = ENV["GITHUB_RUN_NUMBER"] || Time.now.to_i.to_s
+    set_info_plist_value(
+      path: File.join(root, "ios", scheme, "Info.plist"),
+      key: "CFBundleVersion",
+      value: build_no
+    )
     gym(
       workspace: workspace,
       scheme: scheme,
@@ -51,7 +58,6 @@ platform :ios do
       export_method: "app-store",
       output_directory: "build",
       output_name: "app.ipa",
-      xcargs: "CURRENT_PROJECT_VERSION=#{build_no}",
       export_options: {
         method: "app-store",
         signingStyle: "manual",
