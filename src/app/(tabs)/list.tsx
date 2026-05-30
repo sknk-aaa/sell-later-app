@@ -85,7 +85,6 @@ export default function ListScreen() {
                 <Icon name="sliders" size={20} color={colors.ink1} />
                 <Text style={styles.filterBtnText}>{t('list.filter')}</Text>
               </Pressable>
-              <Pressable hitSlop={8}><Icon name="more" size={22} color={colors.ink3} /></Pressable>
             </>
           }
         />
@@ -104,7 +103,6 @@ export default function ListScreen() {
 
         <View style={styles.countRow}>
           <Text style={styles.countText}>{t('list.countText', { count: items.length })}</Text>
-          <Text style={styles.multiSelect}>{t('list.multiSelect')}</Text>
         </View>
 
         {items.length === 0 ? (
@@ -116,13 +114,13 @@ export default function ListScreen() {
         ) : view === 'grid' ? (
           <View style={styles.grid}>
             {items.map((p) => (
-              <GridCard key={p.id} p={p} onStar={() => toggleFavorite(p.id)} onPress={() => open(p.id)} profit={t('common.profit')} />
+              <GridCard key={p.id} p={p} onStar={() => toggleFavorite(p.id)} onPress={() => open(p.id)} onEdit={() => router.push(`/item/${p.id}/edit`)} profit={t('common.profit')} />
             ))}
           </View>
         ) : (
           <View style={styles.listCard}>
             {items.map((p, i) => (
-              <ListRowCard key={p.id} p={p} onStar={() => toggleFavorite(p.id)} onPress={() => open(p.id)} isLast={i === items.length - 1} profit={t('common.profit')} />
+              <ListRowCard key={p.id} p={p} onStar={() => toggleFavorite(p.id)} onPress={() => open(p.id)} onEdit={() => router.push(`/item/${p.id}/edit`)} isLast={i === items.length - 1} profit={t('common.profit')} />
             ))}
           </View>
         )}
@@ -192,7 +190,7 @@ function Select({ label, value, onPress }: { label: string; value: string; onPre
   );
 }
 
-function GridCard({ p, onStar, onPress, profit }: { p: ItemVM; onStar: () => void; onPress: () => void; profit: string }) {
+function GridCard({ p, onStar, onPress, onEdit, profit }: { p: ItemVM; onStar: () => void; onPress: () => void; onEdit: () => void; profit: string }) {
   const { fmt } = useCurrency();
   return (
     <Pressable style={styles.gridCard} onPress={onPress}>
@@ -200,7 +198,7 @@ function GridCard({ p, onStar, onPress, profit }: { p: ItemVM; onStar: () => voi
         {p.imagePath ? (
           <Image source={{ uri: p.imagePath }} style={styles.gridImage} />
         ) : (
-          <PhotoSlot label={p.name.split(' ')[0]} ratio={1} radius={0} />
+          <PhotoSlot label={p.name.split(' ')[0]} ratio={4 / 3} radius={0} />
         )}
         <View style={styles.gridBadge}><StatusBadge kind={p.status} /></View>
         <Pressable style={styles.starBtn} onPress={onStar} hitSlop={6}>
@@ -208,7 +206,12 @@ function GridCard({ p, onStar, onPress, profit }: { p: ItemVM; onStar: () => voi
         </Pressable>
       </View>
       <View style={styles.gridBody}>
-        <Text style={styles.gridName} numberOfLines={2}>{p.name}</Text>
+        <View style={styles.gridNameRow}>
+          <Text style={styles.gridName} numberOfLines={1}>{p.name}</Text>
+          <Pressable onPress={onEdit} hitSlop={8} style={styles.moreBtn}>
+            <Icon name="more" size={16} color={colors.ink3} />
+          </Pressable>
+        </View>
         <View style={styles.priceRow}>
           <Text style={styles.gridPrice}>{fmt(p.expectedPrice)}</Text>
           <Text style={styles.profitInline}>{profit} <Text style={styles.profitInlineNum}>{fmt(p.expectedProfit)}</Text></Text>
@@ -222,7 +225,7 @@ function GridCard({ p, onStar, onPress, profit }: { p: ItemVM; onStar: () => voi
   );
 }
 
-function ListRowCard({ p, onStar, onPress, isLast, profit }: { p: ItemVM; onStar: () => void; onPress: () => void; isLast: boolean; profit: string }) {
+function ListRowCard({ p, onStar, onPress, onEdit, isLast, profit }: { p: ItemVM; onStar: () => void; onPress: () => void; onEdit: () => void; isLast: boolean; profit: string }) {
   const { fmt } = useCurrency();
   return (
     <Pressable style={[styles.listRow, !isLast && styles.listRowBorder]} onPress={onPress}>
@@ -234,9 +237,14 @@ function ListRowCard({ p, onStar, onPress, isLast, profit }: { p: ItemVM; onStar
       <View style={{ flex: 1 }}>
         <View style={styles.listTop}>
           <StatusBadge kind={p.status} />
-          <Pressable onPress={onStar} hitSlop={6}>
-            <Icon name={p.isFavorite ? 'starFill' : 'star'} size={18} color={p.isFavorite ? undefined : colors.ink4} />
-          </Pressable>
+          <View style={styles.listTopRight}>
+            <Pressable onPress={onStar} hitSlop={6}>
+              <Icon name={p.isFavorite ? 'starFill' : 'star'} size={18} color={p.isFavorite ? undefined : colors.ink4} />
+            </Pressable>
+            <Pressable onPress={onEdit} hitSlop={6}>
+              <Icon name="more" size={18} color={colors.ink3} />
+            </Pressable>
+          </View>
         </View>
         <Text style={styles.listName} numberOfLines={1}>{p.name}</Text>
         <View style={[styles.priceRow, { marginTop: 2 }]}>
@@ -277,11 +285,13 @@ const styles = StyleSheet.create({
 
   grid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 16, gap: 14 },
   gridCard: { width: '47%', flexGrow: 1, backgroundColor: colors.surface, borderRadius: 12, overflow: 'hidden', ...shadowCard },
-  gridImage: { width: '100%', aspectRatio: 1, backgroundColor: colors.bg2 },
+  gridImage: { width: '100%', aspectRatio: 4 / 3, backgroundColor: colors.bg2 },
   gridBadge: { position: 'absolute', top: 8, left: 8 },
   starBtn: { position: 'absolute', top: 8, right: 8, width: 28, height: 28, borderRadius: 99, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.12, shadowRadius: 3, elevation: 2 },
-  gridBody: { paddingHorizontal: 12, paddingTop: 10, paddingBottom: 12 },
-  gridName: { fontSize: 13, fontWeight: '500', color: colors.ink1, lineHeight: 18, minHeight: 36 },
+  gridBody: { paddingHorizontal: 12, paddingTop: 8, paddingBottom: 10 },
+  gridNameRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  gridName: { flex: 1, fontSize: 13, fontWeight: '500', color: colors.ink1, lineHeight: 18 },
+  moreBtn: { padding: 2 },
   gridPrice: { fontSize: 16, fontWeight: '700', color: colors.ink1, ...numFont },
 
   priceRow: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', marginTop: 6 },
@@ -296,6 +306,7 @@ const styles = StyleSheet.create({
   listRowBorder: { borderBottomWidth: 1, borderBottomColor: colors.divider },
   listPhoto: { width: 82, height: 82, borderRadius: 10, backgroundColor: colors.bg2 },
   listTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 },
+  listTopRight: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   listName: { fontSize: 14, fontWeight: '600', color: colors.ink1, marginTop: 6, lineHeight: 19 },
   listPrice: { fontSize: 15, fontWeight: '700', color: colors.ink1, ...numFont },
 

@@ -10,7 +10,7 @@ export type IconName =
   | 'edit' | 'pencil' | 'trash' | 'share' | 'copy' | 'chartLine' | 'sliders'
   | 'user' | 'cloud' | 'download' | 'palette' | 'percent' | 'folder' | 'help'
   | 'mail' | 'doc' | 'shield' | 'info' | 'crown' | 'close' | 'closeCircle'
-  | 'helpCircle';
+  | 'helpCircle' | 'homeBrand';
 
 type Props = {
   name: IconName;
@@ -35,6 +35,12 @@ export function Icon({ name, size = 22, fill = false, color }: Props) {
 
   const paths: Record<IconName, React.ReactNode> = {
     home: <><Path d="M3 11.5L12 4l9 7.5" /><Path d="M5 10v10h14V10" /></>,
+    homeBrand: <>
+      <Path d="M4 11l8-6.5L20 11" />
+      <Path d="M6 10v9M18 10v9" />
+      <Path d="M10.5 9.5h3.2l3 3-3.5 3.5-3-3v-3.5z" />
+      <Circle cx={11.6} cy={10.6} r={0.7} fill={stroke} stroke="none" />
+    </>,
     list: <>
       <Path d="M8 6h13M8 12h13M8 18h13" />
       <Circle cx={4} cy={6} r={1.3} fill={stroke} stroke="none" />

@@ -142,7 +142,8 @@ export default function DetailScreen() {
             <View style={styles.saleHead}>
               <Text style={styles.saleHeadTitle}>{t('item.saleRecord')}</Text>
               {!isSold && (
-                <Pressable style={styles.saleBtn} onPress={() => router.push(`/sale?itemId=${vm.id}`)}>
+                <Pressable style={styles.saleBtn} onPress={() => router.push(`/sale?itemId=${vm.id}`)} hitSlop={6}>
+                  <Icon name="checkCircle" size={15} color="#fff" />
                   <Text style={styles.saleBtnText}>{t('item.markSold')}</Text>
                 </Pressable>
               )}
@@ -252,8 +253,8 @@ const styles = StyleSheet.create({
 
   saleHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 14, paddingHorizontal: 16, borderBottomWidth: 1, borderBottomColor: colors.divider },
   saleHeadTitle: { fontSize: 15, fontWeight: '700', color: colors.ink1 },
-  saleBtn: { backgroundColor: colors.statusSoldBg, borderRadius: 8, paddingVertical: 6, paddingHorizontal: 12 },
-  saleBtnText: { color: colors.profit, fontSize: 12, fontWeight: '600' },
+  saleBtn: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: colors.profit, borderRadius: 999, paddingVertical: 8, paddingHorizontal: 14, ...shadowCard },
+  saleBtnText: { color: '#fff', fontSize: 13, fontWeight: '700' },
   saleRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 13, paddingHorizontal: 16 },
   saleRowLabel: { flex: 1, fontSize: 14, color: colors.ink1 },
   saleRowValue: { fontSize: 14, color: colors.ink1, ...numFont },

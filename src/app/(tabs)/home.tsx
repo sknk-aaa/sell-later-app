@@ -32,14 +32,7 @@ export default function HomeScreen() {
   return (
     <View style={styles.screen}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 24 }}>
-        <LargeTitleHeader
-          title={t('tabs.home')}
-          right={
-            <Pressable hitSlop={8}>
-              <Icon name="more" size={22} color={colors.ink3} />
-            </Pressable>
-          }
-        />
+        <LargeTitleHeader title={t('tabs.home')} />
 
         {/* Asset summary card */}
         <Card style={{ paddingBottom: 20 }}>
@@ -144,7 +137,7 @@ function SummaryStat({ icon, iconBg, iconColor, label, value, profit }: { icon: 
       <View style={[styles.summaryIcon, { backgroundColor: iconBg }]}><Icon name={icon} size={20} color={iconColor} /></View>
       <View style={{ flex: 1 }}>
         <Text style={styles.summaryStatLabel} numberOfLines={1}>{label}</Text>
-        <Text style={[styles.summaryStatValue, profit && { color: colors.profit }]} numberOfLines={1}>{value}</Text>
+        <Text style={[styles.summaryStatValue, profit && { color: colors.profit }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.5}>{value}</Text>
       </View>
     </View>
   );

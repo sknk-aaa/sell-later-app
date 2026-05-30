@@ -11,7 +11,7 @@ import { canAddItem } from '@/utils/limits';
 import { colors } from '@/theme/tokens';
 
 const TAB_ICON: Record<string, IconName> = {
-  home: 'home',
+  home: 'homeBrand',
   list: 'list',
   analytics: 'chart',
   settings: 'settings',
