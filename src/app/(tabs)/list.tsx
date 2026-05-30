@@ -114,13 +114,13 @@ export default function ListScreen() {
         ) : view === 'grid' ? (
           <View style={styles.grid}>
             {items.map((p) => (
-              <GridCard key={p.id} p={p} onStar={() => toggleFavorite(p.id)} onPress={() => open(p.id)} onEdit={() => router.push(`/item/${p.id}/edit`)} profit={t('common.profit')} />
+              <GridCard key={p.id} p={p} onStar={() => toggleFavorite(p.id)} onPress={() => open(p.id)} onEdit={() => router.push(`/item/${p.id}/edit`)} />
             ))}
           </View>
         ) : (
           <View style={styles.listCard}>
             {items.map((p, i) => (
-              <ListRowCard key={p.id} p={p} onStar={() => toggleFavorite(p.id)} onPress={() => open(p.id)} onEdit={() => router.push(`/item/${p.id}/edit`)} isLast={i === items.length - 1} profit={t('common.profit')} />
+              <ListRowCard key={p.id} p={p} onStar={() => toggleFavorite(p.id)} onPress={() => open(p.id)} onEdit={() => router.push(`/item/${p.id}/edit`)} isLast={i === items.length - 1} />
             ))}
           </View>
         )}
@@ -190,7 +190,7 @@ function Select({ label, value, onPress }: { label: string; value: string; onPre
   );
 }
 
-function GridCard({ p, onStar, onPress, onEdit, profit }: { p: ItemVM; onStar: () => void; onPress: () => void; onEdit: () => void; profit: string }) {
+function GridCard({ p, onStar, onPress, onEdit }: { p: ItemVM; onStar: () => void; onPress: () => void; onEdit: () => void }) {
   const { fmt } = useCurrency();
   return (
     <Pressable style={styles.gridCard} onPress={onPress}>
@@ -214,7 +214,6 @@ function GridCard({ p, onStar, onPress, onEdit, profit }: { p: ItemVM; onStar: (
         </View>
         <View style={styles.priceRow}>
           <Text style={styles.gridPrice}>{fmt(p.expectedPrice)}</Text>
-          <Text style={styles.profitInline}>{profit} <Text style={styles.profitInlineNum}>{fmt(p.expectedProfit)}</Text></Text>
         </View>
         <View style={styles.metaRow}>
           <View style={styles.metaItem}><Icon name="folder" size={12} color={colors.ink3} /><Text style={styles.metaText} numberOfLines={1}>{p.location || '-'}</Text></View>
@@ -225,7 +224,7 @@ function GridCard({ p, onStar, onPress, onEdit, profit }: { p: ItemVM; onStar: (
   );
 }
 
-function ListRowCard({ p, onStar, onPress, onEdit, isLast, profit }: { p: ItemVM; onStar: () => void; onPress: () => void; onEdit: () => void; isLast: boolean; profit: string }) {
+function ListRowCard({ p, onStar, onPress, onEdit, isLast }: { p: ItemVM; onStar: () => void; onPress: () => void; onEdit: () => void; isLast: boolean }) {
   const { fmt } = useCurrency();
   return (
     <Pressable style={[styles.listRow, !isLast && styles.listRowBorder]} onPress={onPress}>
@@ -249,7 +248,6 @@ function ListRowCard({ p, onStar, onPress, onEdit, isLast, profit }: { p: ItemVM
         <Text style={styles.listName} numberOfLines={1}>{p.name}</Text>
         <View style={[styles.priceRow, { marginTop: 2 }]}>
           <Text style={styles.listPrice}>{fmt(p.expectedPrice)}</Text>
-          <Text style={styles.profitInline}>{profit} <Text style={styles.profitInlineNum}>{fmt(p.expectedProfit)}</Text></Text>
         </View>
         <View style={[styles.metaRow, { marginTop: 4 }]}>
           <View style={styles.metaItem}><Icon name="folder" size={12} color={colors.ink3} /><Text style={styles.metaText} numberOfLines={1}>{p.location || '-'}</Text></View>
