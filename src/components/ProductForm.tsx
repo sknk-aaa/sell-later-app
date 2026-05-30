@@ -202,7 +202,6 @@ export const ProductForm = React.forwardRef<ProductFormHandle, Props>(function P
           <Pressable style={[styles.detailRow, styles.detailRowBorder]} onPress={() => setPicker('condition')}>
             <View style={styles.detailIcon}><Icon name="star" size={15} color={colors.primary} /></View>
             <Text style={styles.detailLabel}>{t('form.condition')}</Text>
-            <RequiredBadge small />
             <Text style={styles.rowValue}>{t(`condition.${condition}`)}</Text>
             <Icon name="chevR" size={14} color={colors.ink4} />
           </Pressable>
@@ -210,7 +209,6 @@ export const ProductForm = React.forwardRef<ProductFormHandle, Props>(function P
           <Pressable style={[styles.detailRow, styles.detailRowBorder]} onPress={() => setPicker('status')}>
             <View style={styles.detailIcon}><Icon name="flag" size={15} color={colors.primary} /></View>
             <Text style={styles.detailLabel}>{t('form.status')}</Text>
-            <RequiredBadge small />
             <View style={styles.statusValue}>
               <View style={[styles.dot, { backgroundColor: STATUS[status].dotColor }]} />
               <Text style={styles.rowValue}>{t(`status.${status}`)}</Text>
