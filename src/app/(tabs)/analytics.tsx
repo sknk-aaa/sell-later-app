@@ -221,7 +221,7 @@ export default function AnalyticsScreen() {
                 <Text style={styles.emptyInline}>{t('analytics.noSalesData')}</Text>
               ) : (
                 <LineChart
-                  data={a.monthlyProfit}
+                  data={a.monthlyProfit.map((m) => ({ ...m, value: m.value / 100 }))}
                   w={chartW}
                   h={200}
                   symbol={symbol}
