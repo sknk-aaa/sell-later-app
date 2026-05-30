@@ -1,7 +1,8 @@
 import React from 'react';
-import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, StyleSheet, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { FormScrollView } from '@/components/FormScrollView';
 import { ModalHeader } from '@/components/headers';
 import { ProductForm, type ProductFormHandle } from '@/components/ProductForm';
 import { Button } from '@/components/ui';
@@ -41,9 +42,10 @@ export default function EditScreen() {
   return (
     <View style={styles.screen}>
       <ModalHeader title="商品を編集" onLeft={() => router.back()} onRight={save} rightBold />
-      <ScrollView
+      <FormScrollView
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
+        bottomOffset={24}
         contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
       >
         <ProductForm
@@ -68,7 +70,7 @@ export default function EditScreen() {
         <View style={styles.actions}>
           <Button label="保存" variant="primary" block onPress={save} />
         </View>
-      </ScrollView>
+      </FormScrollView>
     </View>
   );
 }

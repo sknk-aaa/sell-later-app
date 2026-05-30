@@ -3,6 +3,8 @@ import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { KeyboardProvider } from 'react-native-keyboard-controller';
+import { isExpoGo } from '@/utils/env';
 import { useMigrations } from 'drizzle-orm/expo-sqlite/migrator';
 import { db } from '@/db/client';
 import migrations from '../../drizzle/migrations';
@@ -27,6 +29,7 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider>
+      <KeyboardWrap>
       <StatusBar style="dark" />
       {error ? (
         <Centered>
@@ -57,8 +60,14 @@ export default function RootLayout() {
           </Stack>
         </PurchaseProvider>
       )}
+      </KeyboardWrap>
     </SafeAreaProvider>
   );
+}
+
+function KeyboardWrap({ children }: { children: React.ReactNode }) {
+  if (isExpoGo) return <>{children}</>;
+  return <KeyboardProvider>{children}</KeyboardProvider>;
 }
 
 function Centered({ children }: { children: React.ReactNode }) {

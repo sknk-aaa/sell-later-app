@@ -1,5 +1,6 @@
 import React from 'react';
-import { Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { FormScrollView } from '@/components/FormScrollView';
 import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -57,9 +58,10 @@ export default function SaleScreen() {
   return (
     <View style={styles.screen}>
       <ModalHeader title={t('sale.title')} onLeft={() => router.back()} onRight={save} rightBold />
-      <ScrollView
+      <FormScrollView
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
+        bottomOffset={24}
         contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 24 }}
       >
         <Text style={styles.caption}>{t('sale.caption', { name: vm.name })}</Text>
@@ -104,7 +106,7 @@ export default function SaleScreen() {
         <View style={{ marginTop: 20 }}>
           <Button label={t('sale.record')} variant="primary" block onPress={save} />
         </View>
-      </ScrollView>
+      </FormScrollView>
     </View>
   );
 }

@@ -1,5 +1,6 @@
 import React from 'react';
-import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, StyleSheet, Text, View } from 'react-native';
+import { FormScrollView } from '@/components/FormScrollView';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ModalHeader } from '@/components/headers';
@@ -55,9 +56,10 @@ export default function AddScreen() {
           <Text style={styles.hintText}>✦ {t('onboarding.hint')}</Text>
         </View>
       )}
-      <ScrollView
+      <FormScrollView
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
+        bottomOffset={24}
         contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
       >
         <ProductForm key={formKey} ref={formRef} onRequestPro={() => router.push('/paywall')} />
@@ -67,7 +69,7 @@ export default function AddScreen() {
             <Button label={t('add.addAnother')} variant="ghost" block textColor={colors.primary} onPress={() => save(true)} style={{ marginTop: 10 }} />
           )}
         </View>
-      </ScrollView>
+      </FormScrollView>
     </View>
   );
 }
