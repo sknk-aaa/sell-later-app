@@ -11,6 +11,7 @@ type SettingsState = {
   currency: Setting['currency'];
   feeRate: number;
   defaultPlatform: PlatformId;
+  onboardingDone: boolean;
   loaded: boolean;
   load: () => void;
   setFeeRate: (rate: number) => void;
@@ -19,6 +20,7 @@ type SettingsState = {
   setCurrency: (currency: Setting['currency']) => void;
   setDefaultPlatform: (platform: PlatformId) => void;
   setPro: (value: boolean) => void;
+  completeOnboarding: () => void;
 };
 
 export const useSettingsStore = create<SettingsState>((set) => ({
@@ -28,10 +30,11 @@ export const useSettingsStore = create<SettingsState>((set) => ({
   currency: 'auto',
   feeRate: DEFAULT_FEE_RATE,
   defaultPlatform: 'ebay',
+  onboardingDone: false,
   loaded: false,
   load: () => {
     const s = ensureSettings();
-    set({ isPro: s.isPro, theme: s.theme, language: s.language, currency: s.currency, feeRate: s.feeRate, defaultPlatform: s.defaultPlatform as PlatformId, loaded: true });
+    set({ isPro: s.isPro, theme: s.theme, language: s.language, currency: s.currency, feeRate: s.feeRate, defaultPlatform: s.defaultPlatform as PlatformId, onboardingDone: s.onboardingDone, loaded: true });
   },
   setFeeRate: (rate) => {
     updateSettings({ feeRate: rate });
@@ -56,5 +59,9 @@ export const useSettingsStore = create<SettingsState>((set) => ({
   setPro: (value) => {
     updateSettings({ isPro: value });
     set({ isPro: value });
+  },
+  completeOnboarding: () => {
+    updateSettings({ onboardingDone: true });
+    set({ onboardingDone: true });
   },
 }));

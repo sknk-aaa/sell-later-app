@@ -58,6 +58,7 @@ export const settings = sqliteTable('settings', {
   currency: text('currency', { enum: ['auto', 'USD', 'JPY', 'EUR', 'GBP', 'AUD', 'CAD'] }).notNull().default('auto'),
   feeRate: real('fee_rate').notNull().default(0.1),
   defaultPlatform: text('default_platform').notNull().default('ebay'),
+  onboardingDone: integer('onboarding_done', { mode: 'boolean' }).notNull().default(false),
 });
 
 export type Item = typeof items.$inferSelect;

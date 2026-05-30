@@ -1,19 +1,23 @@
 import React from 'react';
-import { Alert, ScrollView, StyleSheet, View } from 'react-native';
-import { useRouter } from 'expo-router';
+import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ModalHeader } from '@/components/headers';
 import { ProductForm, type ProductFormHandle } from '@/components/ProductForm';
 import { Button } from '@/components/ui';
 import { useTranslation } from '@/i18n';
 import { useItemStore } from '@/stores/useItemStore';
+import { useSettingsStore } from '@/stores/useSettingsStore';
 import { colors } from '@/theme/tokens';
 
 export default function AddScreen() {
   const router = useRouter();
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const { from } = useLocalSearchParams<{ from?: string }>();
+  const isOnboarding = from === 'onboarding';
   const addItem = useItemStore((s) => s.addItem);
+  const completeOnboarding = useSettingsStore((s) => s.completeOnboarding);
   const formRef = React.useRef<ProductFormHandle>(null);
   const [formKey, setFormKey] = React.useState(0);
 
@@ -24,6 +28,11 @@ export default function AddScreen() {
       return;
     }
     await addItem(sub.values, sub.photos);
+    if (isOnboarding) {
+      completeOnboarding();
+      router.replace('/home');
+      return;
+    }
     if (keepOpen) {
       setFormKey((k) => k + 1);
     } else {
@@ -34,6 +43,11 @@ export default function AddScreen() {
   return (
     <View style={styles.screen}>
       <ModalHeader title={t('add.title')} onLeft={() => router.back()} onRight={() => save(false)} />
+      {isOnboarding && (
+        <View style={styles.hint}>
+          <Text style={styles.hintText}>✦ {t('onboarding.hint')}</Text>
+        </View>
+      )}
       <ScrollView
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
@@ -42,7 +56,9 @@ export default function AddScreen() {
         <ProductForm key={formKey} ref={formRef} onRequestPro={() => router.push('/paywall')} />
         <View style={styles.actions}>
           <Button label={t('common.save')} variant="primary" block onPress={() => save(false)} />
-          <Button label={t('add.addAnother')} variant="ghost" block textColor={colors.primary} onPress={() => save(true)} style={{ marginTop: 10 }} />
+          {!isOnboarding && (
+            <Button label={t('add.addAnother')} variant="ghost" block textColor={colors.primary} onPress={() => save(true)} style={{ marginTop: 10 }} />
+          )}
         </View>
       </ScrollView>
     </View>
@@ -51,5 +67,7 @@ export default function AddScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg },
+  hint: { backgroundColor: colors.primarySoft, paddingHorizontal: 16, paddingVertical: 10 },
+  hintText: { fontSize: 13, color: colors.primary, fontWeight: '600', textAlign: 'center' },
   actions: { paddingHorizontal: 16, paddingTop: 20 },
 });

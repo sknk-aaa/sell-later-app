@@ -242,6 +242,15 @@ export const en = {
     terms: 'Terms of Service',
     privacy: 'Privacy Policy',
   },
+  onboarding: {
+    skip: 'Skip',
+    slide1Title: "What's your stuff worth?",
+    slide1Sub: 'Snap a photo, set a price, and see your total resale value at a glance.',
+    slide2Title: 'Simple to track.',
+    slide2Sub: 'Add items in seconds. Watch your estimated total grow.',
+    cta: 'Add your first item',
+    hint: 'Add your first item to see your total',
+  },
   analytics: {
     title: 'Analytics',
     periodMonth: 'This month',

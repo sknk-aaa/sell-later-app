@@ -50,6 +50,13 @@
       "when": 1780114192055,
       "tag": "0006_category_keys",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1780132704528,
+      "tag": "0007_heavy_fixer",
+      "breakpoints": true
     }
   ]
 }

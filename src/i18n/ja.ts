@@ -244,6 +244,15 @@ export const ja: Translation = {
     terms: '利用規約',
     privacy: 'プライバシーポリシー',
   },
+  onboarding: {
+    skip: 'スキップ',
+    slide1Title: '売れるものが、資産に見える。',
+    slide1Sub: '写真と値段を登録するだけ。\n全部売ったらいくらかが、すぐわかります。',
+    slide2Title: '登録はかんたん。',
+    slide2Sub: '数秒でアイテムを追加。\n合計がどんどん増えていきます。',
+    cta: '最初の商品を追加',
+    hint: '最初の商品を追加して、資産合計を確認しよう',
+  },
   analytics: {
     title: '分析',
     periodMonth: '今月',
