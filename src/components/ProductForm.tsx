@@ -4,6 +4,7 @@ import { Icon, type IconName } from './Icon';
 import { ImageField } from './ImageField';
 import { PickerSheet } from './PickerSheet';
 import { CONDITIONS } from '@/constants/conditions';
+import { categoryLabel } from '@/constants/categories';
 import { PLATFORMS, PLATFORM_BY_ID, type PlatformId } from '@/constants/platforms';
 import { useCategoryStore } from '@/stores/useCategoryStore';
 import { useTranslation } from '@/i18n';
@@ -150,7 +151,7 @@ export const ProductForm = React.forwardRef<ProductFormHandle, Props>(function P
         <Pressable style={styles.selectBox} onPress={() => setPicker('category')}>
           <View style={styles.selectIcon}><Icon name="tag" size={16} color={colors.primary} /></View>
           <Text style={[styles.selectText, !category && styles.placeholder]}>
-            {category || t('form.selectCategory')}
+            {category ? categoryLabel(category, t) : t('form.selectCategory')}
           </Text>
           <Icon name="chevR" size={16} color={colors.ink4} />
         </Pressable>
@@ -249,7 +250,7 @@ export const ProductForm = React.forwardRef<ProductFormHandle, Props>(function P
       <PickerSheet
         visible={picker === 'category'}
         title={t('form.category')}
-        options={categories.map((c) => ({ key: c.name, label: c.name }))}
+        options={categories.map((c) => ({ key: c.name, label: categoryLabel(c.name, t) }))}
         selectedKey={category}
         onSelect={(k) => setCategory(k)}
         onClose={() => setPicker(null)}

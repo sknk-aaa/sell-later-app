@@ -10,6 +10,7 @@ import { AdBanner } from '@/components/AdBanner';
 import { LargeTitleHeader } from '@/components/headers';
 import { useTranslation } from '@/i18n';
 import { useCurrency } from '@/utils/useCurrency';
+import { categoryLabel } from '@/constants/categories';
 import { useHomeSummary } from '@/stores/selectors';
 import { colors, numFont, shadowCard, type StatusKind } from '@/theme/tokens';
 
@@ -96,7 +97,7 @@ export default function HomeScreen() {
                 {summary.categoryBreakdown.map((c) => (
                   <View key={c.name} style={styles.legendRow}>
                     <View style={[styles.legendDot, { backgroundColor: c.color }]} />
-                    <Text style={styles.legendName} numberOfLines={1}>{c.name}</Text>
+                    <Text style={styles.legendName} numberOfLines={1}>{categoryLabel(c.name, t)}</Text>
                     <Text style={styles.legendValue}>{fmt(c.value)}</Text>
                     <Text style={styles.legendPct}>{c.pct}%</Text>
                   </View>

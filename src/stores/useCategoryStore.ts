@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import * as Crypto from 'expo-crypto';
 import { deleteCategory, getAllCategories, insertCategory } from '@/db/queries';
 import type { Category } from '@/db/schema';
-import { CATEGORIES } from '@/constants/categories';
+import { CATEGORY_KEYS } from '@/constants/categories';
 
 type CategoryState = {
   categories: Category[];
@@ -16,8 +16,8 @@ export const useCategoryStore = create<CategoryState>((set) => ({
   load: () => {
     let rows = getAllCategories();
     if (rows.length === 0) {
-      // 設計書2.4の固定カテゴリを初期投入
-      CATEGORIES.forEach((name, i) =>
+      // デフォルトカテゴリをキーで初期投入（表示時に翻訳）
+      CATEGORY_KEYS.forEach((name, i) =>
         insertCategory({ id: Crypto.randomUUID(), name, sortOrder: i, isDefault: true }),
       );
       rows = getAllCategories();

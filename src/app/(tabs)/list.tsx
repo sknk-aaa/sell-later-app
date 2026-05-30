@@ -14,6 +14,7 @@ import { useItemViewModels, type ItemVM } from '@/stores/selectors';
 import { useCategoryStore } from '@/stores/useCategoryStore';
 import { useSettingsStore } from '@/stores/useSettingsStore';
 import { canAddItem } from '@/utils/limits';
+import { categoryLabel } from '@/constants/categories';
 import { STATUS } from '@/theme/status';
 import { colors, numFont, shadowCard, type StatusKind } from '@/theme/tokens';
 import { formatDate } from '@/utils/format';
@@ -96,7 +97,7 @@ export default function ListScreen() {
 
         <View style={styles.selects}>
           <Select label={t('list.sortLabel')} value={sortLabel[sort]} onPress={() => setPicker('sort')} />
-          <Select label={t('list.categoryLabel')} value={fCategory === 'all' ? t('common.all') : fCategory} onPress={() => setPicker('category')} />
+          <Select label={t('list.categoryLabel')} value={fCategory === 'all' ? t('common.all') : categoryLabel(fCategory, t)} onPress={() => setPicker('category')} />
           <Select label={t('list.locationLabel')} value={fLocation === 'all' ? t('common.all') : fLocation} onPress={() => setPicker('location')} />
           <Select label={t('list.statusLabel')} value={fStatus === 'all' ? t('common.all') : t(`status.${fStatus as StatusKind}`)} onPress={() => setPicker('status')} />
         </View>
@@ -145,7 +146,7 @@ export default function ListScreen() {
       <PickerSheet
         visible={picker === 'category'}
         title={t('list.categoryFilterTitle')}
-        options={[{ key: 'all', label: t('common.all') }, ...categories.map((c) => ({ key: c.name, label: c.name }))]}
+        options={[{ key: 'all', label: t('common.all') }, ...categories.map((c) => ({ key: c.name, label: categoryLabel(c.name, t) }))]}
         selectedKey={fCategory}
         onSelect={setFCategory}
         onClose={() => setPicker(null)}

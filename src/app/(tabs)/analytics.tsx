@@ -10,6 +10,7 @@ import { LargeTitleHeader } from '@/components/headers';
 import { AdBanner } from '@/components/AdBanner';
 import { useTranslation } from '@/i18n';
 import { useCurrency } from '@/utils/useCurrency';
+import { categoryLabel } from '@/constants/categories';
 import { useAnalytics, type AnalyticsPeriod } from '@/stores/selectors';
 import { useSettingsStore } from '@/stores/useSettingsStore';
 import { STATUS } from '@/theme/status';
@@ -72,7 +73,7 @@ export default function AnalyticsScreen() {
                   {a.categoryExpected.map((c) => (
                     <View key={c.name} style={styles.legendRow}>
                       <View style={[styles.legendDot, { backgroundColor: c.color }]} />
-                      <Text style={styles.legendName} numberOfLines={1}>{c.name}</Text>
+                      <Text style={styles.legendName} numberOfLines={1}>{categoryLabel(c.name, t)}</Text>
                       <Text style={styles.legendValue}>{fmt(c.value)}</Text>
                       <Text style={styles.legendPct}>{c.pct}%</Text>
                     </View>
@@ -200,7 +201,7 @@ export default function AnalyticsScreen() {
                     {a.categoryExpected.map((c) => (
                       <View key={c.name} style={styles.legendRow}>
                         <View style={[styles.legendDot, { backgroundColor: c.color }]} />
-                        <Text style={styles.legendName} numberOfLines={1}>{c.name}</Text>
+                        <Text style={styles.legendName} numberOfLines={1}>{categoryLabel(c.name, t)}</Text>
                         <Text style={styles.legendValue}>{fmt(c.value)}</Text>
                         <Text style={styles.legendPct}>{c.pct}%</Text>
                       </View>
@@ -269,7 +270,7 @@ export default function AnalyticsScreen() {
                     return (
                       <View key={b.name} style={styles.hbarRow}>
                         <View style={{ flex: 1 }}>
-                          <Text style={styles.hbarName}>{b.name}</Text>
+                          <Text style={styles.hbarName}>{categoryLabel(b.name, t)}</Text>
                           <View style={styles.hbarBottom}>
                             <View style={styles.hbarTrack}>
                               <View style={[styles.hbarFill, { width: `${(b.value / max) * 100}%`, backgroundColor: b.color }]} />

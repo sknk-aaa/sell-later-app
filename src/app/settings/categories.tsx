@@ -6,10 +6,13 @@ import { Icon } from '@/components/Icon';
 import { DetailHeader } from '@/components/headers';
 import { Button } from '@/components/ui';
 import { useCategoryStore } from '@/stores/useCategoryStore';
+import { useTranslation } from '@/i18n';
+import { categoryLabel } from '@/constants/categories';
 import { colors } from '@/theme/tokens';
 
 export default function CategoriesScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const categories = useCategoryStore((s) => s.categories);
   const add = useCategoryStore((s) => s.add);
@@ -20,7 +23,7 @@ export default function CategoriesScreen() {
     const trimmed = name.trim();
     if (!trimmed) return;
     if (categories.some((c) => c.name === trimmed)) {
-      Alert.alert('追加できません', '同じ名前のカテゴリが既にあります。');
+      Alert.alert(t('settings.catDupTitle'), t('settings.catDupMsg'));
       return;
     }
     add(trimmed);
@@ -28,15 +31,15 @@ export default function CategoriesScreen() {
   };
 
   const onRemove = (id: string, label: string) => {
-    Alert.alert('カテゴリを削除', `「${label}」を削除しますか？登録済みの商品のカテゴリ表示は変わりません。`, [
-      { text: 'キャンセル', style: 'cancel' },
-      { text: '削除', style: 'destructive', onPress: () => remove(id) },
+    Alert.alert(t('settings.catDeleteTitle'), t('settings.catDeleteMsg', { name: label }), [
+      { text: t('common.cancel'), style: 'cancel' },
+      { text: t('common.delete'), style: 'destructive', onPress: () => remove(id) },
     ]);
   };
 
   return (
     <View style={styles.screen}>
-      <DetailHeader title="カテゴリの編集" onBack={() => router.back()} />
+      <DetailHeader title={t('settings.catTitle')} onBack={() => router.back()} />
       <ScrollView
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
@@ -47,7 +50,7 @@ export default function CategoriesScreen() {
             <TextInput
               value={name}
               onChangeText={setName}
-              placeholder="新しいカテゴリ名"
+              placeholder={t('settings.catNewPlaceholder')}
               placeholderTextColor={colors.ink4}
               style={styles.input}
               maxLength={20}
@@ -55,25 +58,25 @@ export default function CategoriesScreen() {
               returnKeyType="done"
             />
           </View>
-          <Button label="追加" variant="primary" small onPress={onAdd} />
+          <Button label={t('settings.catAdd')} variant="primary" small onPress={onAdd} />
         </View>
 
         <View style={styles.listCard}>
           {categories.map((c, i) => (
             <View key={c.id} style={[styles.row, i !== categories.length - 1 && styles.rowBorder]}>
               <View style={styles.rowIcon}><Icon name="tag" size={15} color={colors.primary} /></View>
-              <Text style={styles.rowLabel}>{c.name}</Text>
+              <Text style={styles.rowLabel}>{categoryLabel(c.name, t)}</Text>
               {c.isDefault ? (
-                <Text style={styles.defaultTag}>標準</Text>
+                <Text style={styles.defaultTag}>{t('settings.catDefault')}</Text>
               ) : (
-                <Pressable hitSlop={8} onPress={() => onRemove(c.id, c.name)}>
+                <Pressable hitSlop={8} onPress={() => onRemove(c.id, categoryLabel(c.name, t))}>
                   <Icon name="trash" size={18} color={colors.danger} />
                 </Pressable>
               )}
             </View>
           ))}
         </View>
-        <Text style={styles.hint}>標準カテゴリは削除できません。追加したカテゴリのみ削除できます。</Text>
+        <Text style={styles.hint}>{t('settings.catHint')}</Text>
       </ScrollView>
     </View>
   );

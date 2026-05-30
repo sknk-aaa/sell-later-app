@@ -15,6 +15,7 @@ import { STATUS } from '@/theme/status';
 import { colors, numFont, shadowCard } from '@/theme/tokens';
 import { feeAmountBps, profitRate } from '@/utils/calculations';
 import { bpsToPercentLabel } from '@/constants/platforms';
+import { categoryLabel } from '@/constants/categories';
 import { formatDate } from '@/utils/format';
 
 export default function DetailScreen() {
@@ -119,7 +120,7 @@ export default function DetailScreen() {
 
         <View style={styles.block}>
           <View style={styles.listCard}>
-            <DetailListRow icon="tag" label={t('item.category')} value={vm.category} />
+            <DetailListRow icon="tag" label={t('item.category')} value={categoryLabel(vm.category, t)} />
             <DetailListRow icon="star" label={t('item.condition')} value={t(`condition.${vm.condition}`)} />
             <DetailListRow
               icon="flag"
