@@ -51,6 +51,7 @@ export default function RootLayout() {
             <Stack.Screen name="add" options={{ presentation: 'modal' }} />
             <Stack.Screen name="sale" options={{ presentation: 'modal' }} />
             <Stack.Screen name="settings/categories" />
+            <Stack.Screen name="settings/info/[key]" />
             <Stack.Screen name="paywall" options={{ presentation: 'modal' }} />
           </Stack>
         </PurchaseProvider>

@@ -1,17 +1,24 @@
 import React from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Stack, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { DetailHeader } from '@/components/headers';
 import { DOCS } from '@/constants/docs';
 import { colors } from '@/theme/tokens';
 
 export default function InfoScreen() {
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { key } = useLocalSearchParams<{ key: string }>();
   const doc = key ? DOCS[key] : undefined;
 
   return (
     <View style={styles.screen}>
-      <Stack.Screen options={{ title: doc?.title ?? '', headerBackTitle: '設定' }} />
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <DetailHeader title={doc?.title ?? ''} onBack={() => router.back()} />
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ padding: 20, paddingBottom: insets.bottom + 32 }}
+      >
         {doc ? (
           <>
             {doc.updated && <Text style={styles.updated}>最終更新日: {doc.updated}</Text>}
@@ -35,7 +42,6 @@ export default function InfoScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg },
-  content: { padding: 20, paddingBottom: 40 },
   updated: { fontSize: 12, color: colors.ink3, marginBottom: 12 },
   intro: { fontSize: 14, color: colors.ink2, lineHeight: 22, marginBottom: 20 },
   section: { marginBottom: 20 },
