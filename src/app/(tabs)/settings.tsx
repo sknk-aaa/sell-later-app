@@ -8,84 +8,98 @@ import { PickerSheet } from '@/components/PickerSheet';
 import { LargeTitleHeader } from '@/components/headers';
 import { useSettingsStore } from '@/stores/useSettingsStore';
 import { useItemStore } from '@/stores/useItemStore';
-import { STATUS } from '@/theme/status';
+import { useTranslation } from '@/i18n';
 import { colors, type StatusKind } from '@/theme/tokens';
 import type { Setting } from '@/db/schema';
 
-const THEME_LABEL: Record<Setting['theme'], string> = {
-  system: 'システム設定に従う',
-  light: 'ライト',
-  dark: 'ダーク',
-};
 const STATUS_ORDER: StatusKind[] = ['stored', 'prep', 'listed', 'sold', 'hold'];
 
 export default function SettingsScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const theme = useSettingsStore((s) => s.theme);
   const setTheme = useSettingsStore((s) => s.setTheme);
+  const language = useSettingsStore((s) => s.language);
+  const setLanguage = useSettingsStore((s) => s.setLanguage);
   const isPro = useSettingsStore((s) => s.isPro);
   const clearAllData = useItemStore((s) => s.clearAllData);
   const [themeOpen, setThemeOpen] = React.useState(false);
+  const [langOpen, setLangOpen] = React.useState(false);
+
+  const themeLabel: Record<Setting['theme'], string> = {
+    system: t('settings.themeSystem'),
+    light: t('settings.themeLight'),
+    dark: t('settings.themeDark'),
+  };
+  const langLabel: Record<Setting['language'], string> = {
+    system: t('language.system'),
+    en: t('language.en'),
+    ja: t('language.ja'),
+  };
 
   const confirmClear = () => {
-    Alert.alert('データの削除', 'すべての商品・写真・売却記録を削除します。この操作は取り消せません。', [
-      { text: 'キャンセル', style: 'cancel' },
-      { text: '削除', style: 'destructive', onPress: () => clearAllData() },
+    Alert.alert(t('settings.deleteTitle'), t('settings.deleteMsg'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      { text: t('common.delete'), style: 'destructive', onPress: () => clearAllData() },
     ]);
   };
 
   const showStatuses = () => {
-    Alert.alert('ステータス（固定）', STATUS_ORDER.map((k) => `・${STATUS[k].label}`).join('\n') + '\n\nステータスは売却記録などの動作に関わるため固定です。');
+    Alert.alert(
+      t('settings.statusFixedTitle'),
+      STATUS_ORDER.map((k) => `・${t(`status.${k}`)}`).join('\n') + '\n\n' + t('settings.statusFixedNote'),
+    );
   };
 
   const contact = () => {
-    const url = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent('「売るもの管理」お問い合わせ')}`;
+    const url = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(t('common.appName'))}`;
     Linking.openURL(url).catch(() =>
-      Alert.alert('お問い合わせ', `メールアプリを開けませんでした。\n${CONTACT_EMAIL} までご連絡ください。`),
+      Alert.alert(t('settings.contact'), `${t('settings.contactFailMsg')}\n${CONTACT_EMAIL}`),
     );
   };
 
   return (
     <View style={styles.screen}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 24 }}>
-        <LargeTitleHeader title="設定" />
+        <LargeTitleHeader title={t('settings.title')} />
 
         {/* Pro card */}
         <Card style={styles.proCard}>
           <View style={styles.proIcon}><Icon name="crown" size={32} color={colors.star} /></View>
           <View style={{ flex: 1 }}>
-            <Text style={styles.proTitle}>{isPro ? 'Proプラン 利用中' : 'Proプラン'}</Text>
+            <Text style={styles.proTitle}>{isPro ? t('settings.proTitleActive') : t('settings.proTitle')}</Text>
             <Text style={styles.proSub} numberOfLines={1}>
-              {isPro ? '広告非表示・写真複数枚・分析が使えます' : '広告を非表示にして、より便利に使えます'}
+              {isPro ? t('settings.proSubPro') : t('settings.proSubFree')}
             </Text>
           </View>
           {!isPro && (
             <Pressable style={styles.proBtn} onPress={() => router.push('/paywall')}>
-              <Text style={styles.proBtnText}>プランを確認</Text>
+              <Text style={styles.proBtnText}>{t('settings.checkPlan')}</Text>
             </Pressable>
           )}
         </Card>
 
-        <SectionTitle>アカウント・データ</SectionTitle>
+        <SectionTitle>{t('settings.sectionData')}</SectionTitle>
         <ListCard>
-          <Row icon="trash" iconBg="rgba(255,107,107,0.12)" iconColor={colors.danger} label="データの削除" labelColor={colors.danger} onPress={confirmClear} isLast />
+          <Row icon="trash" iconBg="rgba(255,107,107,0.12)" iconColor={colors.danger} label={t('settings.deleteData')} labelColor={colors.danger} onPress={confirmClear} isLast />
         </ListCard>
 
-        <SectionTitle>表示・カスタマイズ</SectionTitle>
+        <SectionTitle>{t('settings.sectionDisplay')}</SectionTitle>
         <ListCard>
-          <Row icon="palette" label="テーマカラー" value={THEME_LABEL[theme]} onPress={() => setThemeOpen(true)} />
-          <Row icon="percent" label="利益の計算方法" value="送料・手数料を差し引く" onPress={() => router.push('/settings/info/profit')} />
-          <Row icon="sliders" label="ステータスの編集" value="固定" onPress={showStatuses} />
-          <Row icon="folder" label="カテゴリの編集" onPress={() => router.push('/settings/categories')} isLast />
+          <Row icon="palette" label={t('settings.theme')} value={themeLabel[theme]} onPress={() => setThemeOpen(true)} />
+          <Row icon="doc" label={t('language.title')} value={langLabel[language]} onPress={() => setLangOpen(true)} />
+          <Row icon="percent" label={t('settings.profitMethod')} value={t('settings.profitMethodValue')} onPress={() => router.push('/settings/info/profit')} />
+          <Row icon="sliders" label={t('settings.statusEdit')} value={t('settings.statusFixed')} onPress={showStatuses} />
+          <Row icon="folder" label={t('settings.categoryEdit')} onPress={() => router.push('/settings/categories')} isLast />
         </ListCard>
 
-        <SectionTitle>サポート・その他</SectionTitle>
+        <SectionTitle>{t('settings.sectionSupport')}</SectionTitle>
         <ListCard>
-          <Row icon="help" label="よくある質問" onPress={() => router.push('/settings/info/faq')} />
-          <Row icon="mail" label="お問い合わせ" onPress={contact} />
-          <Row icon="doc" label="利用規約" onPress={() => router.push('/settings/info/terms')} />
-          <Row icon="shield" label="プライバシーポリシー" onPress={() => router.push('/settings/info/privacy')} />
-          <Row icon="info" label="アプリについて" value="Version 1.0.0" onPress={() => Alert.alert('売るもの管理', 'Version 1.0.0')} isLast />
+          <Row icon="help" label={t('settings.faq')} onPress={() => router.push('/settings/info/faq')} />
+          <Row icon="mail" label={t('settings.contact')} onPress={contact} />
+          <Row icon="doc" label={t('settings.terms')} onPress={() => router.push('/settings/info/terms')} />
+          <Row icon="shield" label={t('settings.privacy')} onPress={() => router.push('/settings/info/privacy')} />
+          <Row icon="info" label={t('settings.about')} value={t('settings.version')} onPress={() => Alert.alert(t('common.appName'), t('settings.version'))} isLast />
         </ListCard>
 
         <View style={{ height: 24 }} />
@@ -93,11 +107,19 @@ export default function SettingsScreen() {
 
       <PickerSheet
         visible={themeOpen}
-        title="テーマカラー"
-        options={(Object.keys(THEME_LABEL) as Setting['theme'][]).map((k) => ({ key: k, label: THEME_LABEL[k] }))}
+        title={t('settings.theme')}
+        options={(['system', 'light', 'dark'] as Setting['theme'][]).map((k) => ({ key: k, label: themeLabel[k] }))}
         selectedKey={theme}
         onSelect={(k) => setTheme(k as Setting['theme'])}
         onClose={() => setThemeOpen(false)}
+      />
+      <PickerSheet
+        visible={langOpen}
+        title={t('language.title')}
+        options={(['system', 'en', 'ja'] as Setting['language'][]).map((k) => ({ key: k, label: langLabel[k] }))}
+        selectedKey={language}
+        onSelect={(k) => setLanguage(k as Setting['language'])}
+        onClose={() => setLangOpen(false)}
       />
     </View>
   );
