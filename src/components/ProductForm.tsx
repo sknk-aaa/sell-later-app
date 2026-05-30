@@ -4,7 +4,7 @@ import { Icon, type IconName } from './Icon';
 import { ImageField } from './ImageField';
 import { PickerSheet } from './PickerSheet';
 import { CONDITIONS } from '@/constants/conditions';
-import { categoryLabel } from '@/constants/categories';
+import { categoryLabel, DEFAULT_CATEGORY } from '@/constants/categories';
 import { PLATFORMS, PLATFORM_BY_ID, type PlatformId } from '@/constants/platforms';
 import { useCategoryStore } from '@/stores/useCategoryStore';
 import { useTranslation } from '@/i18n';
@@ -103,7 +103,7 @@ export const ProductForm = React.forwardRef<ProductFormHandle, Props>(function P
       if (!valid) return null;
       const values: ItemInput = {
         name: name.trim(),
-        category: category || t('form.selectCategory'),
+        category: category || DEFAULT_CATEGORY,
         purchasePrice: purchasePrice.trim() ? parse(purchasePrice) : null,
         expectedPrice: sellMinor,
         shippingFee: shipMinor,

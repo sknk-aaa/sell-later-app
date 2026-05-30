@@ -104,6 +104,8 @@ export const ja: Translation = {
   home: {
     summary: '資産サマリー',
     summarySubtitle: 'すべて売却した場合の想定',
+    hero: '全部売ったら',
+    heroProfit: '想定利益',
     totalSales: '想定売上合計',
     totalProfit: '想定利益合計',
     soldProfit: '売却済み利益',
