@@ -56,7 +56,7 @@ types/sql.d.ts             .sql inline-import 用の型宣言
 
 ## 8. 既知の方針・未対応（意図的）
 - **テーマはライト描画固定**。light/dark/system の選択・保存はするが、ダークの実配色適用は後日ポリッシュ（全画面のtokens色参照をテーマ化する大改修のため分離）。
-- 設定の「利益の計算方法 / よくある質問 / お問い合わせ / 利用規約 / プライバシーポリシー」はv1.0プレースホルダ（Alert）。
+- 設定の「利益の計算方法 / よくある質問 / 利用規約 / プライバシーポリシー」は**アプリ内テキスト画面で実装済み**（`src/constants/docs.ts` に内容、`app/settings/info/[key].tsx` で表示、DetailHeader方式）。「お問い合わせ」は mailto（`625.somq2525@gmail.com`）。※規約/プライバシーの**運営者名は汎用表記**、ASCのプライバシーポリシーURL欄用に同文面のホスティングは別途必要。
 - 詳細の「分析を見る」は分析タブへ遷移するのみ。
 - **ビルド/配信は GitHub Actions(macOS) + fastlane（prebuild方式・EAS非依存）**。STEP4で実装。Expo Go はあくまで開発確認用で、STEP4で native依存(iap/admob)が入ると dev client に移行する。
 
