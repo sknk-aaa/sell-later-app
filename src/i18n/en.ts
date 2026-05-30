@@ -1,6 +1,6 @@
 export const en = {
   common: {
-    appName: 'SellLater',
+    appName: 'Worthnest',
     cancel: 'Cancel',
     delete: 'Delete',
     close: 'Close',
@@ -229,7 +229,7 @@ export const en = {
   },
   paywall: {
     title: 'Upgrade to Pro',
-    appName: 'SellLater Pro',
+    appName: 'Worthnest Pro',
     subtitle: 'Ad-free and more.',
     noAds: 'Hide ads',
     moreItems: 'Add 21+ items',

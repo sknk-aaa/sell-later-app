@@ -2,7 +2,7 @@ import type { Translation } from './en';
 
 export const ja: Translation = {
   common: {
-    appName: '売るもの管理',
+    appName: 'うりカタ',
     cancel: 'キャンセル',
     delete: '削除',
     close: '閉じる',
@@ -231,7 +231,7 @@ export const ja: Translation = {
   },
   paywall: {
     title: 'Proにアップグレード',
-    appName: '売るもの管理 Pro',
+    appName: 'うりカタ Pro',
     subtitle: '広告なしで、もっと便利に。',
     noAds: '広告を非表示',
     moreItems: '商品を21件以上登録',

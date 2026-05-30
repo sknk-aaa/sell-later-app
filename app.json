@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "売るもの管理",
+    "name": "Worthnest",
     "slug": "sell-later-app",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -49,6 +49,9 @@
         }
       ],
       "expo-localization"
-    ]
+    ],
+    "locales": {
+      "ja": "./locales/ja.json"
+    }
   }
 }
