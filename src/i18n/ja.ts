@@ -252,6 +252,7 @@ export const ja: Translation = {
     slide2Sub: '数秒でアイテムを追加。\n合計がどんどん増えていきます。',
     cta: '最初の商品を追加',
     hint: '最初の商品を追加して、資産合計を確認しよう',
+    next: '次へ',
   },
   analytics: {
     title: '分析',

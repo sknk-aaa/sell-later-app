@@ -250,6 +250,7 @@ export const en = {
     slide2Sub: 'Add items in seconds. Watch your estimated total grow.',
     cta: 'Add your first item',
     hint: 'Add your first item to see your total',
+    next: 'Next',
   },
   analytics: {
     title: 'Analytics',

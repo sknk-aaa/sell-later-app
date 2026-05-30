@@ -189,7 +189,7 @@ export default function OnboardingScreen() {
         onPress={isLast ? finish : () => flatRef.current?.scrollToIndex({ index: activeIndex + 1, animated: true })}
       >
         <Text style={styles.ctaText}>
-          {isLast ? t('onboarding.cta') : t('common.seeAll')}
+          {isLast ? t('onboarding.cta') : t('onboarding.next')}
         </Text>
       </Pressable>
     </View>
