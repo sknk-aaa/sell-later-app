@@ -192,6 +192,7 @@ function Select({ label, value, onPress }: { label: string; value: string; onPre
 }
 
 function GridCard({ p, onStar, onPress, profit }: { p: ItemVM; onStar: () => void; onPress: () => void; profit: string }) {
+  const { fmt } = useCurrency();
   return (
     <Pressable style={styles.gridCard} onPress={onPress}>
       <View>
@@ -221,6 +222,7 @@ function GridCard({ p, onStar, onPress, profit }: { p: ItemVM; onStar: () => voi
 }
 
 function ListRowCard({ p, onStar, onPress, isLast, profit }: { p: ItemVM; onStar: () => void; onPress: () => void; isLast: boolean; profit: string }) {
+  const { fmt } = useCurrency();
   return (
     <Pressable style={[styles.listRow, !isLast && styles.listRowBorder]} onPress={onPress}>
       {p.imagePath ? (
