@@ -87,6 +87,8 @@ export const ja: Translation = {
     catDeleteTitle: 'カテゴリを削除',
     catDeleteMsg: '「{name}」を削除しますか？登録済みの商品のカテゴリ表示は変わりません。',
     catHint: '標準カテゴリは削除できません。追加したカテゴリのみ削除できます。',
+    docUpdated: '最終更新日',
+    docNotFound: '内容が見つかりませんでした。',
     sectionSupport: 'サポート・その他',
     faq: 'よくある質問',
     contact: 'お問い合わせ',

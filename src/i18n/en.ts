@@ -85,6 +85,8 @@ export const en = {
     catDeleteTitle: 'Delete category',
     catDeleteMsg: 'Delete "{name}"? Existing items keep their category label.',
     catHint: 'Default categories cannot be deleted. Only categories you add can be deleted.',
+    docUpdated: 'Last updated',
+    docNotFound: 'Content not found.',
     sectionSupport: 'Support & About',
     faq: 'FAQ',
     contact: 'Contact us',

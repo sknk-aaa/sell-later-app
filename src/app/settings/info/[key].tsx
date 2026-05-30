@@ -3,14 +3,16 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DetailHeader } from '@/components/headers';
-import { DOCS } from '@/constants/docs';
+import { useTranslation } from '@/i18n';
+import { getDoc } from '@/constants/docs';
 import { colors } from '@/theme/tokens';
 
 export default function InfoScreen() {
   const router = useRouter();
+  const { t, locale } = useTranslation();
   const insets = useSafeAreaInsets();
   const { key } = useLocalSearchParams<{ key: string }>();
-  const doc = key ? DOCS[key] : undefined;
+  const doc = key ? getDoc(locale, key) : undefined;
 
   return (
     <View style={styles.screen}>
@@ -21,7 +23,7 @@ export default function InfoScreen() {
       >
         {doc ? (
           <>
-            {doc.updated && <Text style={styles.updated}>最終更新日: {doc.updated}</Text>}
+            {doc.updated && <Text style={styles.updated}>{t('settings.docUpdated')}: {doc.updated}</Text>}
             {doc.intro && <Text style={styles.intro}>{doc.intro}</Text>}
             {doc.sections.map((s, i) => (
               <View key={i} style={styles.section}>
@@ -33,7 +35,7 @@ export default function InfoScreen() {
             ))}
           </>
         ) : (
-          <Text style={styles.body}>内容が見つかりませんでした。</Text>
+          <Text style={styles.body}>{t('settings.docNotFound')}</Text>
         )}
       </ScrollView>
     </View>
