@@ -8,6 +8,7 @@ import { PickerSheet } from '@/components/PickerSheet';
 import { AdBanner } from '@/components/AdBanner';
 import { LargeTitleHeader } from '@/components/headers';
 import { useTranslation } from '@/i18n';
+import { useCurrency } from '@/utils/useCurrency';
 import { useItemStore } from '@/stores/useItemStore';
 import { useItemViewModels, type ItemVM } from '@/stores/selectors';
 import { useCategoryStore } from '@/stores/useCategoryStore';
@@ -15,7 +16,7 @@ import { useSettingsStore } from '@/stores/useSettingsStore';
 import { canAddItem } from '@/utils/limits';
 import { STATUS } from '@/theme/status';
 import { colors, numFont, shadowCard, type StatusKind } from '@/theme/tokens';
-import { formatDate, yen } from '@/utils/format';
+import { formatDate } from '@/utils/format';
 
 type View2 = 'grid' | 'list';
 type SortKey = 'recent' | 'price' | 'profit' | 'status';
@@ -207,8 +208,8 @@ function GridCard({ p, onStar, onPress, profit }: { p: ItemVM; onStar: () => voi
       <View style={styles.gridBody}>
         <Text style={styles.gridName} numberOfLines={2}>{p.name}</Text>
         <View style={styles.priceRow}>
-          <Text style={styles.gridPrice}>{yen(p.expectedPrice)}</Text>
-          <Text style={styles.profitInline}>{profit} <Text style={styles.profitInlineNum}>{yen(p.expectedProfit)}</Text></Text>
+          <Text style={styles.gridPrice}>{fmt(p.expectedPrice)}</Text>
+          <Text style={styles.profitInline}>{profit} <Text style={styles.profitInlineNum}>{fmt(p.expectedProfit)}</Text></Text>
         </View>
         <View style={styles.metaRow}>
           <View style={styles.metaItem}><Icon name="folder" size={12} color={colors.ink3} /><Text style={styles.metaText} numberOfLines={1}>{p.location || '-'}</Text></View>
@@ -236,8 +237,8 @@ function ListRowCard({ p, onStar, onPress, isLast, profit }: { p: ItemVM; onStar
         </View>
         <Text style={styles.listName} numberOfLines={1}>{p.name}</Text>
         <View style={[styles.priceRow, { marginTop: 2 }]}>
-          <Text style={styles.listPrice}>{yen(p.expectedPrice)}</Text>
-          <Text style={styles.profitInline}>{profit} <Text style={styles.profitInlineNum}>{yen(p.expectedProfit)}</Text></Text>
+          <Text style={styles.listPrice}>{fmt(p.expectedPrice)}</Text>
+          <Text style={styles.profitInline}>{profit} <Text style={styles.profitInlineNum}>{fmt(p.expectedProfit)}</Text></Text>
         </View>
         <View style={[styles.metaRow, { marginTop: 4 }]}>
           <View style={styles.metaItem}><Icon name="folder" size={12} color={colors.ink3} /><Text style={styles.metaText} numberOfLines={1}>{p.location || '-'}</Text></View>

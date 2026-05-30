@@ -73,6 +73,9 @@ export const ja: Translation = {
     about: 'アプリについて',
     version: 'Version 1.0.0',
     contactFailMsg: 'メールアプリを開けませんでした。次のアドレスまでご連絡ください:',
+    currency: '通貨',
+    currencyTitle: '通貨',
+    currencyAuto: '自動',
   },
   home: {
     summary: '資産サマリー',

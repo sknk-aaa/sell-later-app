@@ -8,17 +8,19 @@ import { PhotoSlot } from '@/components/PhotoSlot';
 import { Button } from '@/components/ui';
 import { DetailHeader } from '@/components/headers';
 import { useTranslation } from '@/i18n';
+import { useCurrency } from '@/utils/useCurrency';
 import { useItemStore } from '@/stores/useItemStore';
 import { useItemViewModel } from '@/stores/selectors';
 import { useSettingsStore } from '@/stores/useSettingsStore';
 import { STATUS } from '@/theme/status';
 import { colors, numFont, shadowCard } from '@/theme/tokens';
 import { feeAmount, profitRate } from '@/utils/calculations';
-import { formatDate, yen } from '@/utils/format';
+import { formatDate } from '@/utils/format';
 
 export default function DetailScreen() {
   const router = useRouter();
   const { t } = useTranslation();
+  const { fmt } = useCurrency();
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
   const vm = useItemViewModel(id);
@@ -103,15 +105,15 @@ export default function DetailScreen() {
         <View style={styles.block}>
           <View style={styles.listCard}>
             <View style={styles.priceColRow}>
-              <PriceCol label={t('item.estSalePrice')} value={yen(vm.expectedPrice)} />
-              <PriceCol label={t('item.estProfit')} value={yen(profit)} profit help />
+              <PriceCol label={t('item.estSalePrice')} value={fmt(vm.expectedPrice)} />
+              <PriceCol label={t('item.estProfit')} value={fmt(profit)} profit help />
               <PriceCol label={t('item.profitRate')} value={`${rate.toFixed(1)}%`} />
             </View>
             <View style={styles.hLine} />
             <View style={[styles.priceColRow, { paddingVertical: 14 }]}>
-              <SmallCol label={t('item.purchasePrice')} value={yen(vm.purchasePrice ?? 0)} />
-              <SmallCol label={t('item.shipping')} value={yen(vm.shippingFee)} />
-              <SmallCol label={t('item.fee', { rate: feeRatePct })} value={`-${yen(fee)}`} />
+              <SmallCol label={t('item.purchasePrice')} value={fmt(vm.purchasePrice ?? 0)} />
+              <SmallCol label={t('item.shipping')} value={fmt(vm.shippingFee)} />
+              <SmallCol label={t('item.fee', { rate: feeRatePct })} value={`-${fmt(fee)}`} />
             </View>
           </View>
         </View>
@@ -145,9 +147,9 @@ export default function DetailScreen() {
                 </Pressable>
               )}
             </View>
-            <SaleRow label={t('item.actualPrice')} value={vm.sale ? yen(vm.sale.actualPrice) : '-'} />
-            <SaleRow label={t('item.actualShipping')} value={vm.sale ? yen(vm.sale.actualShippingFee) : '-'} />
-            <SaleRow label={t('item.actualProfit')} value={vm.sale ? yen(vm.sale.actualProfit) : '-'} profit={!!vm.sale} />
+            <SaleRow label={t('item.actualPrice')} value={vm.sale ? fmt(vm.sale.actualPrice) : '-'} />
+            <SaleRow label={t('item.actualShipping')} value={vm.sale ? fmt(vm.sale.actualShippingFee) : '-'} />
+            <SaleRow label={t('item.actualProfit')} value={vm.sale ? fmt(vm.sale.actualProfit) : '-'} profit={!!vm.sale} />
             <SaleRow label={t('item.soldAt')} value={vm.sale ? formatDate(vm.sale.soldAt) : '-'} isLast />
           </View>
         </View>

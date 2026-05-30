@@ -71,6 +71,9 @@ export const en = {
     about: 'About this app',
     version: 'Version 1.0.0',
     contactFailMsg: 'Could not open the mail app. Please email us at',
+    currency: 'Currency',
+    currencyTitle: 'Currency',
+    currencyAuto: 'Automatic',
   },
   home: {
     summary: 'Asset Summary',

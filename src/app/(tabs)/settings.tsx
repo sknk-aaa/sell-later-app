@@ -9,6 +9,7 @@ import { LargeTitleHeader } from '@/components/headers';
 import { useSettingsStore } from '@/stores/useSettingsStore';
 import { useItemStore } from '@/stores/useItemStore';
 import { useTranslation } from '@/i18n';
+import { CURRENCY_CODES } from '@/utils/money';
 import { colors, type StatusKind } from '@/theme/tokens';
 import type { Setting } from '@/db/schema';
 
@@ -21,10 +22,15 @@ export default function SettingsScreen() {
   const setTheme = useSettingsStore((s) => s.setTheme);
   const language = useSettingsStore((s) => s.language);
   const setLanguage = useSettingsStore((s) => s.setLanguage);
+  const currency = useSettingsStore((s) => s.currency);
+  const setCurrency = useSettingsStore((s) => s.setCurrency);
   const isPro = useSettingsStore((s) => s.isPro);
   const clearAllData = useItemStore((s) => s.clearAllData);
   const [themeOpen, setThemeOpen] = React.useState(false);
   const [langOpen, setLangOpen] = React.useState(false);
+  const [currencyOpen, setCurrencyOpen] = React.useState(false);
+
+  const currencyLabel = (c: Setting['currency']) => (c === 'auto' ? t('settings.currencyAuto') : c);
 
   const themeLabel: Record<Setting['theme'], string> = {
     system: t('settings.themeSystem'),
@@ -88,6 +94,7 @@ export default function SettingsScreen() {
         <ListCard>
           <Row icon="palette" label={t('settings.theme')} value={themeLabel[theme]} onPress={() => setThemeOpen(true)} />
           <Row icon="doc" label={t('language.title')} value={langLabel[language]} onPress={() => setLangOpen(true)} />
+          <Row icon="tag" label={t('settings.currency')} value={currencyLabel(currency)} onPress={() => setCurrencyOpen(true)} />
           <Row icon="percent" label={t('settings.profitMethod')} value={t('settings.profitMethodValue')} onPress={() => router.push('/settings/info/profit')} />
           <Row icon="sliders" label={t('settings.statusEdit')} value={t('settings.statusFixed')} onPress={showStatuses} />
           <Row icon="folder" label={t('settings.categoryEdit')} onPress={() => router.push('/settings/categories')} isLast />
@@ -120,6 +127,14 @@ export default function SettingsScreen() {
         selectedKey={language}
         onSelect={(k) => setLanguage(k as Setting['language'])}
         onClose={() => setLangOpen(false)}
+      />
+      <PickerSheet
+        visible={currencyOpen}
+        title={t('settings.currencyTitle')}
+        options={(['auto', ...CURRENCY_CODES] as Setting['currency'][]).map((k) => ({ key: k, label: currencyLabel(k) }))}
+        selectedKey={currency}
+        onSelect={(k) => setCurrency(k as Setting['currency'])}
+        onClose={() => setCurrencyOpen(false)}
       />
     </View>
   );

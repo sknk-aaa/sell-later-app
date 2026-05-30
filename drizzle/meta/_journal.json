@@ -22,6 +22,20 @@
       "when": 1780110720777,
       "tag": "0002_spooky_winter_soldier",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1780112619785,
+      "tag": "0003_chunky_king_bedlam",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1780112619786,
+      "tag": "0004_money_to_minor_units",
+      "breakpoints": true
     }
   ]
 }

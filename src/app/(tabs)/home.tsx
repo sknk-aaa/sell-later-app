@@ -9,9 +9,9 @@ import { Donut } from '@/components/charts/Donut';
 import { AdBanner } from '@/components/AdBanner';
 import { LargeTitleHeader } from '@/components/headers';
 import { useTranslation } from '@/i18n';
+import { useCurrency } from '@/utils/useCurrency';
 import { useHomeSummary } from '@/stores/selectors';
 import { colors, numFont, shadowCard, type StatusKind } from '@/theme/tokens';
-import { yen } from '@/utils/format';
 
 const STATUS_ICONS: { kind: StatusKind; icon: IconName; color: string }[] = [
   { kind: 'stored', icon: 'archive', color: '#9CA3AF' },
@@ -24,6 +24,7 @@ const STATUS_ICONS: { kind: StatusKind; icon: IconName; color: string }[] = [
 export default function HomeScreen() {
   const router = useRouter();
   const { t } = useTranslation();
+  const { fmt } = useCurrency();
   const summary = useHomeSummary();
   const maxStatus = Math.max(1, ...STATUS_ICONS.map((s) => summary.statusCounts[s.kind]));
 
@@ -46,8 +47,8 @@ export default function HomeScreen() {
             <Text style={styles.summarySub}>{t('home.summarySubtitle')}</Text>
           </View>
           <View style={styles.row16}>
-            <SummaryStat icon="tag" iconBg={colors.primarySoft} iconColor={colors.primary} label={t('home.totalSales')} value={yen(summary.expectedSalesTotal)} />
-            <SummaryStat icon="chartLine" iconBg="rgba(16,185,129,0.12)" iconColor={colors.profit} label={t('home.totalProfit')} value={yen(summary.expectedProfitTotal)} profit />
+            <SummaryStat icon="tag" iconBg={colors.primarySoft} iconColor={colors.primary} label={t('home.totalSales')} value={fmt(summary.expectedSalesTotal)} />
+            <SummaryStat icon="chartLine" iconBg="rgba(16,185,129,0.12)" iconColor={colors.profit} label={t('home.totalProfit')} value={fmt(summary.expectedProfitTotal)} profit />
           </View>
           <View style={styles.summaryDivider} />
           <SummaryStat
@@ -55,7 +56,7 @@ export default function HomeScreen() {
             iconBg={colors.statusSoldBg}
             iconColor={colors.profit}
             label={t('home.soldProfit')}
-            value={yen(summary.soldProfitTotal)}
+            value={fmt(summary.soldProfitTotal)}
             profit
           />
         </Card>
@@ -90,13 +91,13 @@ export default function HomeScreen() {
             <Text style={styles.emptyInline}>{t('common.noData')}</Text>
           ) : (
             <View style={styles.donutRow}>
-              <Donut data={summary.categoryBreakdown} size={150} thickness={26} centerLabel={t('common.total')} centerValue={yen(summary.expectedSalesTotal)} />
+              <Donut data={summary.categoryBreakdown} size={150} thickness={26} centerLabel={t('common.total')} centerValue={fmt(summary.expectedSalesTotal)} />
               <View style={styles.legend}>
                 {summary.categoryBreakdown.map((c) => (
                   <View key={c.name} style={styles.legendRow}>
                     <View style={[styles.legendDot, { backgroundColor: c.color }]} />
                     <Text style={styles.legendName} numberOfLines={1}>{c.name}</Text>
-                    <Text style={styles.legendValue}>{yen(c.value)}</Text>
+                    <Text style={styles.legendValue}>{fmt(c.value)}</Text>
                     <Text style={styles.legendPct}>{c.pct}%</Text>
                   </View>
                 ))}
@@ -122,7 +123,7 @@ export default function HomeScreen() {
                 )}
                 <View style={styles.recentBody}>
                   <Text style={styles.recentName} numberOfLines={2}>{p.name}</Text>
-                  <Text style={styles.recentPrice}>{yen(p.expectedPrice)}</Text>
+                  <Text style={styles.recentPrice}>{fmt(p.expectedPrice)}</Text>
                   <StatusBadge kind={p.status} soft />
                 </View>
               </Pressable>

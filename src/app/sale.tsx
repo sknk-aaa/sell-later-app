@@ -7,26 +7,26 @@ import { Icon } from '@/components/Icon';
 import { ModalHeader } from '@/components/headers';
 import { Button } from '@/components/ui';
 import { useTranslation } from '@/i18n';
+import { useCurrency } from '@/utils/useCurrency';
 import { useItemStore } from '@/stores/useItemStore';
 import { useItemViewModel } from '@/stores/selectors';
 import { useSettingsStore } from '@/stores/useSettingsStore';
 import { actualProfit, feeAmount } from '@/utils/calculations';
 import { colors, numFont } from '@/theme/tokens';
-import { formatDate, yen } from '@/utils/format';
-
-const toNum = (s: string) => Number(s.replace(/[^0-9]/g, '') || '0');
+import { formatDate } from '@/utils/format';
 
 export default function SaleScreen() {
   const router = useRouter();
   const { t } = useTranslation();
+  const { fmt, symbol, sanitize, parse, toInput } = useCurrency();
   const insets = useSafeAreaInsets();
   const { itemId } = useLocalSearchParams<{ itemId: string }>();
   const vm = useItemViewModel(itemId);
   const feeRate = useSettingsStore((s) => s.feeRate);
   const recordSale = useItemStore((s) => s.recordSale);
 
-  const [price, setPrice] = React.useState(vm ? String(vm.expectedPrice) : '');
-  const [shipping, setShipping] = React.useState(vm ? String(vm.shippingFee) : '0');
+  const [price, setPrice] = React.useState(vm ? toInput(vm.expectedPrice) : '');
+  const [shipping, setShipping] = React.useState(vm ? toInput(vm.shippingFee) : '');
   const [soldAt, setSoldAt] = React.useState(() => new Date());
   const [showPicker, setShowPicker] = React.useState(false);
 
@@ -44,14 +44,14 @@ export default function SaleScreen() {
     );
   }
 
-  const priceNum = toNum(price);
-  const shipNum = toNum(shipping);
-  const fee = feeAmount(priceNum, feeRate);
-  const profit = actualProfit(priceNum, feeRate, shipNum);
+  const priceMinor = parse(price);
+  const shipMinor = parse(shipping);
+  const fee = feeAmount(priceMinor, feeRate);
+  const profit = actualProfit(priceMinor, feeRate, shipMinor);
   const feeRatePct = Math.round(feeRate * 100);
 
   const save = () => {
-    recordSale(vm.id, { actualPrice: priceNum, actualShipping: shipNum, soldAt }, feeRate);
+    recordSale(vm.id, { actualPrice: priceMinor, actualShipping: shipMinor, soldAt }, feeRate);
     router.back();
   };
 
@@ -66,9 +66,9 @@ export default function SaleScreen() {
         <Text style={styles.caption}>{t('sale.caption', { name: vm.name })}</Text>
 
         <View style={styles.card}>
-          <MoneyField label={t('sale.actualPrice')} value={price} onChange={setPrice} required={t('common.required')} />
+          <MoneyField label={t('sale.actualPrice')} value={price} onChange={setPrice} required={t('common.required')} symbol={symbol} sanitize={sanitize} />
           <View style={styles.divider} />
-          <MoneyField label={t('sale.actualShipping')} value={shipping} onChange={setShipping} required={t('common.required')} />
+          <MoneyField label={t('sale.actualShipping')} value={shipping} onChange={setShipping} required={t('common.required')} symbol={symbol} sanitize={sanitize} />
           <View style={styles.divider} />
           <Pressable style={styles.fieldRow} onPress={() => setShowPicker((v) => !v)}>
             <Text style={styles.fieldLabel}>{t('sale.date')}</Text>
@@ -93,12 +93,12 @@ export default function SaleScreen() {
         <View style={styles.card}>
           <View style={styles.fieldRow}>
             <Text style={styles.profitLabel}>{t('sale.fee', { rate: feeRatePct })}</Text>
-            <Text style={styles.profitMinor}>-{yen(fee)}</Text>
+            <Text style={styles.profitMinor}>-{fmt(fee)}</Text>
           </View>
           <View style={styles.divider} />
           <View style={styles.fieldRow}>
             <Text style={styles.profitLabelMain}>{t('sale.actualProfit')}</Text>
-            <Text style={styles.profitValue}>{yen(profit)}</Text>
+            <Text style={styles.profitValue}>{fmt(profit)}</Text>
           </View>
         </View>
 
@@ -110,7 +110,7 @@ export default function SaleScreen() {
   );
 }
 
-function MoneyField({ label, value, onChange, required }: { label: string; value: string; onChange: (t: string) => void; required: string }) {
+function MoneyField({ label, value, onChange, required, symbol, sanitize }: { label: string; value: string; onChange: (t: string) => void; required: string; symbol: string; sanitize: (t: string) => string }) {
   return (
     <View style={styles.fieldRow}>
       <View style={styles.fieldLabelRow}>
@@ -118,11 +118,11 @@ function MoneyField({ label, value, onChange, required }: { label: string; value
         <View style={styles.reqBadge}><Text style={styles.reqText}>{required}</Text></View>
       </View>
       <View style={styles.moneyInputWrap}>
-        <Text style={styles.yenMark}>¥</Text>
+        <Text style={styles.yenMark}>{symbol}</Text>
         <TextInput
           value={value}
-          onChangeText={(t) => onChange(t.replace(/[^0-9]/g, ''))}
-          keyboardType="number-pad"
+          onChangeText={(tx) => onChange(sanitize(tx))}
+          keyboardType="decimal-pad"
           placeholder="0"
           placeholderTextColor={colors.ink4}
           style={styles.moneyInput}

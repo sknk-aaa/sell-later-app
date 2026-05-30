@@ -6,6 +6,7 @@ import { PickerSheet } from './PickerSheet';
 import { CONDITIONS } from '@/constants/conditions';
 import { useCategoryStore } from '@/stores/useCategoryStore';
 import { useTranslation } from '@/i18n';
+import { useCurrency } from '@/utils/useCurrency';
 import { STATUS } from '@/theme/status';
 import { colors, numFont, type StatusKind } from '@/theme/tokens';
 import type { ItemCondition } from '@/db/schema';
@@ -13,7 +14,6 @@ import type { ItemInput, PhotoValue } from '@/stores/useItemStore';
 import { useSettingsStore } from '@/stores/useSettingsStore';
 import { expectedProfit, feeAmount, profitRate } from '@/utils/calculations';
 import { photoLimit } from '@/utils/limits';
-import { yen } from '@/utils/format';
 
 export type ProductFormHandle = {
   getSubmission: () => { values: ItemInput; photos: PhotoValue[] } | null;
@@ -26,14 +26,12 @@ type Props = {
   onRequestPro?: () => void;
 };
 
-const onlyDigits = (s: string) => s.replace(/[^0-9]/g, '');
-const toNum = (s: string) => Number(onlyDigits(s) || '0');
-
 export const ProductForm = React.forwardRef<ProductFormHandle, Props>(function ProductForm(
   { initial, initialPhotos, onValidityChange, onRequestPro },
   ref,
 ) {
   const { t } = useTranslation();
+  const { fmt, symbol, sanitize, parse, toInput } = useCurrency();
   const feeRate = useSettingsStore((s) => s.feeRate);
   const isPro = useSettingsStore((s) => s.isPro);
   const categories = useCategoryStore((s) => s.categories);
@@ -41,13 +39,13 @@ export const ProductForm = React.forwardRef<ProductFormHandle, Props>(function P
   const [name, setName] = React.useState(initial?.name ?? '');
   const [category, setCategory] = React.useState(initial?.category ?? '');
   const [purchasePrice, setPurchasePrice] = React.useState(
-    initial?.purchasePrice != null ? String(initial.purchasePrice) : '',
+    initial?.purchasePrice != null ? toInput(initial.purchasePrice) : '',
   );
   const [sellPrice, setSellPrice] = React.useState(
-    initial?.expectedPrice != null ? String(initial.expectedPrice) : '',
+    initial?.expectedPrice != null ? toInput(initial.expectedPrice) : '',
   );
   const [shipping, setShipping] = React.useState(
-    initial?.shippingFee != null ? String(initial.shippingFee) : '0',
+    initial?.shippingFee != null ? toInput(initial.shippingFee) : '',
   );
   const [condition, setCondition] = React.useState<ItemCondition>(initial?.condition ?? 'new');
   const [status, setStatus] = React.useState<StatusKind>(initial?.status ?? 'stored');
@@ -56,13 +54,14 @@ export const ProductForm = React.forwardRef<ProductFormHandle, Props>(function P
   const [photos, setPhotos] = React.useState<PhotoValue[]>(initialPhotos ?? []);
   const [picker, setPicker] = React.useState<null | 'category' | 'condition' | 'status'>(null);
 
-  const sellNum = toNum(sellPrice);
-  const shipNum = toNum(shipping);
-  const fee = feeAmount(sellNum, feeRate);
-  const profit = expectedProfit(sellNum, feeRate, shipNum);
-  const rate = profitRate(sellNum, profit);
+  const sellMinor = parse(sellPrice);
+  const shipMinor = parse(shipping);
+  const fee = feeAmount(sellMinor, feeRate);
+  const profit = expectedProfit(sellMinor, feeRate, shipMinor);
+  const rate = profitRate(sellMinor, profit);
 
-  const valid = name.trim().length > 0 && sellNum > 0;
+  const valid = name.trim().length > 0 && sellMinor > 0;
+  const feeRatePct = Math.round(feeRate * 100);
 
   React.useEffect(() => {
     onValidityChange?.(valid);
@@ -74,9 +73,9 @@ export const ProductForm = React.forwardRef<ProductFormHandle, Props>(function P
       const values: ItemInput = {
         name: name.trim(),
         category: category || t('form.selectCategory'),
-        purchasePrice: purchasePrice.trim() ? toNum(purchasePrice) : null,
-        expectedPrice: sellNum,
-        shippingFee: shipNum,
+        purchasePrice: purchasePrice.trim() ? parse(purchasePrice) : null,
+        expectedPrice: sellMinor,
+        shippingFee: shipMinor,
         location: location.trim() || null,
         condition,
         status,
@@ -85,8 +84,6 @@ export const ProductForm = React.forwardRef<ProductFormHandle, Props>(function P
       return { values, photos };
     },
   }));
-
-  const feeRatePct = Math.round(feeRate * 100);
 
   return (
     <View>
@@ -131,14 +128,14 @@ export const ProductForm = React.forwardRef<ProductFormHandle, Props>(function P
         <Text style={styles.sectionTitle}>{t('form.pricing')}</Text>
         <View style={styles.priceBox}>
           <View style={styles.priceRow}>
-            <PriceInput label={t('form.purchasePrice')} help value={purchasePrice} onChange={setPurchasePrice} />
-            <PriceInput label={t('form.sellPrice')} required value={sellPrice} onChange={setSellPrice} />
-            <PriceInput label={t('form.shipping')} required value={shipping} onChange={setShipping} />
+            <PriceInput label={t('form.purchasePrice')} help value={purchasePrice} onChange={setPurchasePrice} symbol={symbol} sanitize={sanitize} />
+            <PriceInput label={t('form.sellPrice')} required value={sellPrice} onChange={setSellPrice} symbol={symbol} sanitize={sanitize} />
+            <PriceInput label={t('form.shipping')} value={shipping} onChange={setShipping} symbol={symbol} sanitize={sanitize} />
           </View>
           <View style={styles.priceDivider} />
           <View style={styles.priceRow}>
-            <DerivedField label={t('form.fee', { rate: feeRatePct })} value={`-${yen(fee)}`} />
-            <DerivedField label={t('form.estProfit')} help value={yen(profit)} profit />
+            <DerivedField label={t('form.fee', { rate: feeRatePct })} value={`-${fmt(fee)}`} />
+            <DerivedField label={t('form.estProfit')} help value={fmt(profit)} profit />
             <DerivedField label={t('form.profitRate')} help value={`${rate.toFixed(1)}%`} />
           </View>
         </View>
@@ -245,7 +242,7 @@ function FieldLabel({ label, required }: { label: string; required?: boolean }) 
   );
 }
 
-function PriceInput({ label, value, onChange, required, help }: { label: string; value: string; onChange: (t: string) => void; required?: boolean; help?: boolean }) {
+function PriceInput({ label, value, onChange, required, help, symbol, sanitize }: { label: string; value: string; onChange: (t: string) => void; required?: boolean; help?: boolean; symbol: string; sanitize: (t: string) => string }) {
   return (
     <View style={{ flex: 1 }}>
       <View style={styles.priceLabelRow}>
@@ -254,11 +251,11 @@ function PriceInput({ label, value, onChange, required, help }: { label: string;
         {required && <RequiredBadge small />}
       </View>
       <View style={styles.priceValueBox}>
-        <Text style={styles.yenMark}>¥</Text>
+        <Text style={styles.yenMark}>{symbol}</Text>
         <TextInput
           value={value}
-          onChangeText={(t) => onChange(t.replace(/[^0-9]/g, ''))}
-          keyboardType="number-pad"
+          onChangeText={(tx) => onChange(sanitize(tx))}
+          keyboardType="decimal-pad"
           placeholder="0"
           placeholderTextColor={colors.ink4}
           style={styles.priceInput}

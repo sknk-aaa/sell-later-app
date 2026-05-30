@@ -9,11 +9,11 @@ import { PickerSheet } from '@/components/PickerSheet';
 import { LargeTitleHeader } from '@/components/headers';
 import { AdBanner } from '@/components/AdBanner';
 import { useTranslation } from '@/i18n';
+import { useCurrency } from '@/utils/useCurrency';
 import { useAnalytics, type AnalyticsPeriod } from '@/stores/selectors';
 import { useSettingsStore } from '@/stores/useSettingsStore';
 import { STATUS } from '@/theme/status';
 import { colors, numFont, shadowCard, type StatusKind } from '@/theme/tokens';
-import { yen } from '@/utils/format';
 
 type Tab = 'summary' | 'expected' | 'sold';
 
@@ -29,6 +29,7 @@ const STATUS_DONUT_COLOR: Record<StatusKind, string> = {
 export default function AnalyticsScreen() {
   const router = useRouter();
   const { t } = useTranslation();
+  const { fmt } = useCurrency();
   const isPro = useSettingsStore((s) => s.isPro);
   const [tab, setTab] = React.useState<Tab>('summary');
   const [period, setPeriod] = React.useState<AnalyticsPeriod>('all');
@@ -46,9 +47,9 @@ export default function AnalyticsScreen() {
   if (!isPro) {
     const statusDonutDataFree = STATUS_ORDER.map((k) => ({ value: a.statusCounts[k], color: STATUS_DONUT_COLOR[k] }));
     const tiles: TileDef[] = [
-      { color: colors.primary, bg: colors.primarySoft, icon: 'tag', label: t('home.totalSales'), value: yen(a.expectedSalesTotal), sub: '—' },
-      { color: colors.profit, bg: 'rgba(16,185,129,0.12)', icon: 'chartLine', label: t('home.totalProfit'), value: yen(a.expectedProfitTotal), sub: '—' },
-      { color: colors.statusHold, bg: colors.statusHoldBg, icon: 'bag', label: t('analytics.soldProfit'), value: yen(a.soldProfitTotal), sub: t('analytics.thisMonth', { val: yen(a.thisMonthProfit) }) },
+      { color: colors.primary, bg: colors.primarySoft, icon: 'tag', label: t('home.totalSales'), value: fmt(a.expectedSalesTotal), sub: '—' },
+      { color: colors.profit, bg: 'rgba(16,185,129,0.12)', icon: 'chartLine', label: t('home.totalProfit'), value: fmt(a.expectedProfitTotal), sub: '—' },
+      { color: colors.statusHold, bg: colors.statusHoldBg, icon: 'bag', label: t('analytics.soldProfit'), value: fmt(a.soldProfitTotal), sub: t('analytics.thisMonth', { val: fmt(a.thisMonthProfit) }) },
       { color: colors.statusPrep, bg: colors.statusPrepBg, icon: 'archive', label: t('analytics.soldCount'), value: `${a.soldCount}`, sub: t('analytics.thisMonth', { val: String(a.thisMonthCount) }) },
     ];
     return (
@@ -66,13 +67,13 @@ export default function AnalyticsScreen() {
               <Text style={styles.emptyInline}>{t('analytics.noData')}</Text>
             ) : (
               <View style={styles.donutRow}>
-                <Donut data={a.categoryExpected} size={150} thickness={26} centerLabel={t('common.total')} centerValue={yen(a.expectedSalesTotal)} />
+                <Donut data={a.categoryExpected} size={150} thickness={26} centerLabel={t('common.total')} centerValue={fmt(a.expectedSalesTotal)} />
                 <View style={styles.legend}>
                   {a.categoryExpected.map((c) => (
                     <View key={c.name} style={styles.legendRow}>
                       <View style={[styles.legendDot, { backgroundColor: c.color }]} />
                       <Text style={styles.legendName} numberOfLines={1}>{c.name}</Text>
-                      <Text style={styles.legendValue}>{yen(c.value)}</Text>
+                      <Text style={styles.legendValue}>{fmt(c.value)}</Text>
                       <Text style={styles.legendPct}>{c.pct}%</Text>
                     </View>
                   ))}
@@ -168,18 +169,18 @@ export default function AnalyticsScreen() {
           <View style={styles.tilesRow}>
             {(tab === 'sold'
               ? ([
-                  { color: colors.statusHold, bg: colors.statusHoldBg, icon: 'bag', label: t('analytics.soldProfit'), value: yen(a.soldProfitTotal), sub: t('analytics.thisMonth', { val: yen(a.thisMonthProfit) }) },
+                  { color: colors.statusHold, bg: colors.statusHoldBg, icon: 'bag', label: t('analytics.soldProfit'), value: fmt(a.soldProfitTotal), sub: t('analytics.thisMonth', { val: fmt(a.thisMonthProfit) }) },
                   { color: colors.statusPrep, bg: colors.statusPrepBg, icon: 'archive', label: t('analytics.soldCount'), value: `${a.soldCount}`, sub: t('analytics.thisMonth', { val: String(a.thisMonthCount) }) },
                 ] as TileDef[])
               : tab === 'expected'
                 ? ([
-                    { color: colors.primary, bg: colors.primarySoft, icon: 'tag', label: t('home.totalSales'), value: yen(a.expectedSalesTotal), sub: '—' },
-                    { color: colors.profit, bg: 'rgba(16,185,129,0.12)', icon: 'chartLine', label: t('home.totalProfit'), value: yen(a.expectedProfitTotal), sub: '—' },
+                    { color: colors.primary, bg: colors.primarySoft, icon: 'tag', label: t('home.totalSales'), value: fmt(a.expectedSalesTotal), sub: '—' },
+                    { color: colors.profit, bg: 'rgba(16,185,129,0.12)', icon: 'chartLine', label: t('home.totalProfit'), value: fmt(a.expectedProfitTotal), sub: '—' },
                   ] as TileDef[])
                 : ([
-                    { color: colors.primary, bg: colors.primarySoft, icon: 'tag', label: t('home.totalSales'), value: yen(a.expectedSalesTotal), sub: '—' },
-                    { color: colors.profit, bg: 'rgba(16,185,129,0.12)', icon: 'chartLine', label: t('home.totalProfit'), value: yen(a.expectedProfitTotal), sub: '—' },
-                    { color: colors.statusHold, bg: colors.statusHoldBg, icon: 'bag', label: t('analytics.soldProfit'), value: yen(a.soldProfitTotal), sub: t('analytics.thisMonth', { val: yen(a.thisMonthProfit) }) },
+                    { color: colors.primary, bg: colors.primarySoft, icon: 'tag', label: t('home.totalSales'), value: fmt(a.expectedSalesTotal), sub: '—' },
+                    { color: colors.profit, bg: 'rgba(16,185,129,0.12)', icon: 'chartLine', label: t('home.totalProfit'), value: fmt(a.expectedProfitTotal), sub: '—' },
+                    { color: colors.statusHold, bg: colors.statusHoldBg, icon: 'bag', label: t('analytics.soldProfit'), value: fmt(a.soldProfitTotal), sub: t('analytics.thisMonth', { val: fmt(a.thisMonthProfit) }) },
                     { color: colors.statusPrep, bg: colors.statusPrepBg, icon: 'archive', label: t('analytics.soldCount'), value: `${a.soldCount}`, sub: t('analytics.thisMonth', { val: String(a.thisMonthCount) }) },
                   ] as TileDef[])
             ).map((tl) => <BigTile key={tl.label} {...tl} />)}
@@ -194,13 +195,13 @@ export default function AnalyticsScreen() {
                 <Text style={styles.emptyInline}>{t('analytics.noData')}</Text>
               ) : (
                 <View style={styles.donutRow}>
-                  <Donut data={a.categoryExpected} size={150} thickness={26} centerLabel={t('common.total')} centerValue={yen(a.expectedSalesTotal)} />
+                  <Donut data={a.categoryExpected} size={150} thickness={26} centerLabel={t('common.total')} centerValue={fmt(a.expectedSalesTotal)} />
                   <View style={styles.legend}>
                     {a.categoryExpected.map((c) => (
                       <View key={c.name} style={styles.legendRow}>
                         <View style={[styles.legendDot, { backgroundColor: c.color }]} />
                         <Text style={styles.legendName} numberOfLines={1}>{c.name}</Text>
-                        <Text style={styles.legendValue}>{yen(c.value)}</Text>
+                        <Text style={styles.legendValue}>{fmt(c.value)}</Text>
                         <Text style={styles.legendPct}>{c.pct}%</Text>
                       </View>
                     ))}
@@ -224,7 +225,7 @@ export default function AnalyticsScreen() {
                   h={200}
                   highlightIdx={11}
                   highlightLabel={t('analytics.periodMonth')}
-                  highlightValue={yen(a.monthlyProfit[11].value)}
+                  highlightValue={fmt(a.monthlyProfit[11].value)}
                 />
               )}
             </Card>
@@ -273,7 +274,7 @@ export default function AnalyticsScreen() {
                             <View style={styles.hbarTrack}>
                               <View style={[styles.hbarFill, { width: `${(b.value / max) * 100}%`, backgroundColor: b.color }]} />
                             </View>
-                            <Text style={styles.hbarValue}>{yen(b.value)}</Text>
+                            <Text style={styles.hbarValue}>{fmt(b.value)}</Text>
                             <Text style={styles.hbarPct}>{b.pct}%</Text>
                           </View>
                         </View>
@@ -305,9 +306,9 @@ export default function AnalyticsScreen() {
                     <View key={r.label} style={[styles.tableRow, i !== a.table.length - 1 && styles.tableRowBorder]}>
                       <Text style={[styles.td, styles.cMonth]}>{r.label}</Text>
                       <Text style={[styles.td, styles.cCount]}>{r.count}</Text>
-                      <Text style={[styles.td, styles.cFlex, numFont]}>{yen(r.salesSum)}</Text>
-                      <Text style={[styles.td, styles.cFlex, numFont]}>{yen(r.shipSum)}</Text>
-                      <Text style={[styles.td, styles.cFlex, styles.tdProfit]}>{yen(r.profitSum)}</Text>
+                      <Text style={[styles.td, styles.cFlex, numFont]}>{fmt(r.salesSum)}</Text>
+                      <Text style={[styles.td, styles.cFlex, numFont]}>{fmt(r.shipSum)}</Text>
+                      <Text style={[styles.td, styles.cFlex, styles.tdProfit]}>{fmt(r.profitSum)}</Text>
                     </View>
                   ))}
                 </>

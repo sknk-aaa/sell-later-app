@@ -7,12 +7,14 @@ type SettingsState = {
   isPro: boolean;
   theme: Setting['theme'];
   language: Setting['language'];
+  currency: Setting['currency'];
   feeRate: number;
   loaded: boolean;
   load: () => void;
   setFeeRate: (rate: number) => void;
   setTheme: (theme: Setting['theme']) => void;
   setLanguage: (language: Setting['language']) => void;
+  setCurrency: (currency: Setting['currency']) => void;
   setPro: (value: boolean) => void;
 };
 
@@ -20,11 +22,12 @@ export const useSettingsStore = create<SettingsState>((set) => ({
   isPro: false,
   theme: 'system',
   language: 'system',
+  currency: 'auto',
   feeRate: DEFAULT_FEE_RATE,
   loaded: false,
   load: () => {
     const s = ensureSettings();
-    set({ isPro: s.isPro, theme: s.theme, language: s.language, feeRate: s.feeRate, loaded: true });
+    set({ isPro: s.isPro, theme: s.theme, language: s.language, currency: s.currency, feeRate: s.feeRate, loaded: true });
   },
   setFeeRate: (rate) => {
     updateSettings({ feeRate: rate });
@@ -37,6 +40,10 @@ export const useSettingsStore = create<SettingsState>((set) => ({
   setLanguage: (language) => {
     updateSettings({ language });
     set({ language });
+  },
+  setCurrency: (currency) => {
+    updateSettings({ currency });
+    set({ currency });
   },
   setPro: (value) => {
     updateSettings({ isPro: value });
