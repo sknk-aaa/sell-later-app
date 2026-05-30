@@ -1,6 +1,7 @@
 import React from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
+import { CONTACT_EMAIL } from '@/constants/docs';
 import { Icon, type IconName } from '@/components/Icon';
 import { Card } from '@/components/ui';
 import { PickerSheet } from '@/components/PickerSheet';
@@ -37,7 +38,12 @@ export default function SettingsScreen() {
     Alert.alert('ステータス（固定）', STATUS_ORDER.map((k) => `・${STATUS[k].label}`).join('\n') + '\n\nステータスは売却記録などの動作に関わるため固定です。');
   };
 
-  const notReady = (title: string) => Alert.alert(title, 'この項目はv1.0では準備中です。');
+  const contact = () => {
+    const url = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent('「売るもの管理」お問い合わせ')}`;
+    Linking.openURL(url).catch(() =>
+      Alert.alert('お問い合わせ', `メールアプリを開けませんでした。\n${CONTACT_EMAIL} までご連絡ください。`),
+    );
+  };
 
   return (
     <View style={styles.screen}>
@@ -68,17 +74,17 @@ export default function SettingsScreen() {
         <SectionTitle>表示・カスタマイズ</SectionTitle>
         <ListCard>
           <Row icon="palette" label="テーマカラー" value={THEME_LABEL[theme]} onPress={() => setThemeOpen(true)} />
-          <Row icon="percent" label="利益の計算方法" value="送料・手数料を差し引く" onPress={() => notReady('利益の計算方法')} />
+          <Row icon="percent" label="利益の計算方法" value="送料・手数料を差し引く" onPress={() => router.push('/settings/info/profit')} />
           <Row icon="sliders" label="ステータスの編集" value="固定" onPress={showStatuses} />
           <Row icon="folder" label="カテゴリの編集" onPress={() => router.push('/settings/categories')} isLast />
         </ListCard>
 
         <SectionTitle>サポート・その他</SectionTitle>
         <ListCard>
-          <Row icon="help" label="よくある質問" onPress={() => notReady('よくある質問')} />
-          <Row icon="mail" label="お問い合わせ" onPress={() => notReady('お問い合わせ')} />
-          <Row icon="doc" label="利用規約" onPress={() => notReady('利用規約')} />
-          <Row icon="shield" label="プライバシーポリシー" onPress={() => notReady('プライバシーポリシー')} />
+          <Row icon="help" label="よくある質問" onPress={() => router.push('/settings/info/faq')} />
+          <Row icon="mail" label="お問い合わせ" onPress={contact} />
+          <Row icon="doc" label="利用規約" onPress={() => router.push('/settings/info/terms')} />
+          <Row icon="shield" label="プライバシーポリシー" onPress={() => router.push('/settings/info/privacy')} />
           <Row icon="info" label="アプリについて" value="Version 1.0.0" onPress={() => Alert.alert('売るもの管理', 'Version 1.0.0')} isLast />
         </ListCard>
 
