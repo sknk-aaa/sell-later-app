@@ -8,6 +8,7 @@ import {
   type ViewStyle,
 } from 'react-native';
 import { Icon, type IconName } from './Icon';
+import { useTranslation } from '@/i18n';
 import { colors, radii, shadowCard } from '@/theme/tokens';
 
 // styles.css の .card / .list-card / .section-head / .btn-* / .divider を移植
@@ -36,19 +37,20 @@ export function SectionHead({
   title,
   titleSize = 17,
   onSeeAll,
-  seeAllLabel = 'すべて見る',
+  seeAllLabel,
 }: {
   title: string;
   titleSize?: number;
   onSeeAll?: () => void;
   seeAllLabel?: string;
 }) {
+  const { t } = useTranslation();
   return (
     <View style={styles.sectionHead}>
       <Text style={[styles.sectionTitle, { fontSize: titleSize }]}>{title}</Text>
       {onSeeAll && (
         <Pressable style={styles.seeAll} onPress={onSeeAll} hitSlop={8}>
-          <Text style={styles.seeAllText}>{seeAllLabel}</Text>
+          <Text style={styles.seeAllText}>{seeAllLabel ?? t('common.seeAll')}</Text>
           <Icon name="chevR" size={12} color={colors.primary} />
         </Pressable>
       )}

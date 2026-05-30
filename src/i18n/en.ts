@@ -13,6 +13,7 @@ export const en = {
     total: 'Total',
     all: 'All',
     profit: 'Profit',
+    seeAll: 'See all',
   },
   tabs: {
     home: 'Home',
@@ -110,7 +111,6 @@ export const en = {
     recentItems: 'Recently Added',
     noItems: 'No items yet. Add one with the + button.',
     items: 'items',
-    seeAll: 'See all',
   },
   list: {
     title: 'Items',

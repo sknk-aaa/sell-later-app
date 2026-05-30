@@ -15,6 +15,7 @@ export const ja: Translation = {
     total: '合計',
     all: 'すべて',
     profit: '利益',
+    seeAll: 'すべて見る',
   },
   tabs: {
     home: 'ホーム',
@@ -112,7 +113,6 @@ export const ja: Translation = {
     recentItems: '最近追加した商品',
     noItems: 'まだ商品がありません。「追加」から登録できます。',
     items: '件',
-    seeAll: 'すべて見る',
   },
   list: {
     title: '一覧',
