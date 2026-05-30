@@ -51,6 +51,7 @@ export const settings = sqliteTable('settings', {
   id: integer('id').primaryKey(),
   isPro: integer('is_pro', { mode: 'boolean' }).notNull().default(false),
   theme: text('theme', { enum: ['light', 'dark', 'system'] }).notNull().default('system'),
+  language: text('language', { enum: ['system', 'en', 'ja'] }).notNull().default('system'),
   feeRate: real('fee_rate').notNull().default(0.1),
 });
 
