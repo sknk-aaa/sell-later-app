@@ -10,8 +10,8 @@ import { useTranslation } from '@/i18n';
 import { useCurrency } from '@/utils/useCurrency';
 import { useItemStore } from '@/stores/useItemStore';
 import { useItemViewModel } from '@/stores/selectors';
-import { useSettingsStore } from '@/stores/useSettingsStore';
-import { actualProfit, feeAmount } from '@/utils/calculations';
+import { profitBps, feeAmountBps } from '@/utils/calculations';
+import { bpsToPercentLabel } from '@/constants/platforms';
 import { colors, numFont } from '@/theme/tokens';
 import { formatDate } from '@/utils/format';
 
@@ -22,7 +22,6 @@ export default function SaleScreen() {
   const insets = useSafeAreaInsets();
   const { itemId } = useLocalSearchParams<{ itemId: string }>();
   const vm = useItemViewModel(itemId);
-  const feeRate = useSettingsStore((s) => s.feeRate);
   const recordSale = useItemStore((s) => s.recordSale);
 
   const [price, setPrice] = React.useState(vm ? toInput(vm.expectedPrice) : '');
@@ -46,12 +45,12 @@ export default function SaleScreen() {
 
   const priceMinor = parse(price);
   const shipMinor = parse(shipping);
-  const fee = feeAmount(priceMinor, feeRate);
-  const profit = actualProfit(priceMinor, feeRate, shipMinor);
-  const feeRatePct = Math.round(feeRate * 100);
+  const fee = feeAmountBps(priceMinor, vm.feeRateBps, vm.feeFixedCents);
+  const profit = profitBps(priceMinor, vm.feeRateBps, vm.feeFixedCents, shipMinor);
+  const feeRatePct = bpsToPercentLabel(vm.feeRateBps);
 
   const save = () => {
-    recordSale(vm.id, { actualPrice: priceMinor, actualShipping: shipMinor, soldAt }, feeRate);
+    recordSale(vm.id, { actualPrice: priceMinor, actualShipping: shipMinor, soldAt }, { rateBps: vm.feeRateBps, fixedCents: vm.feeFixedCents });
     router.back();
   };
 

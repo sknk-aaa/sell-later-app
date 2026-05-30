@@ -36,6 +36,13 @@
       "when": 1780112619786,
       "tag": "0004_money_to_minor_units",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1780114192054,
+      "tag": "0005_fixed_retro_girl",
+      "breakpoints": true
     }
   ]
 }

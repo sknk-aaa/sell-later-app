@@ -8,6 +8,9 @@ export const items = sqliteTable('items', {
   purchasePrice: integer('purchase_price'),
   expectedPrice: integer('expected_price').notNull(),
   shippingFee: integer('shipping_fee').notNull().default(0),
+  platform: text('platform'),
+  feeRateBps: integer('fee_rate_bps').notNull().default(1000),
+  feeFixedCents: integer('fee_fixed_cents').notNull().default(0),
   location: text('location'),
   condition: text('condition', { enum: ['new', 'good', 'normal', 'damaged'] }).notNull(),
   status: text('status', { enum: ['stored', 'prep', 'listed', 'sold', 'hold'] }).notNull(),
@@ -54,6 +57,7 @@ export const settings = sqliteTable('settings', {
   language: text('language', { enum: ['system', 'en', 'ja'] }).notNull().default('system'),
   currency: text('currency', { enum: ['auto', 'USD', 'JPY', 'EUR', 'GBP', 'AUD', 'CAD'] }).notNull().default('auto'),
   feeRate: real('fee_rate').notNull().default(0.1),
+  defaultPlatform: text('default_platform').notNull().default('ebay'),
 });
 
 export type Item = typeof items.$inferSelect;

@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { ensureSettings, updateSettings } from '@/db/queries';
 import { DEFAULT_FEE_RATE } from '@/utils/calculations';
 import type { Setting } from '@/db/schema';
+import type { PlatformId } from '@/constants/platforms';
 
 type SettingsState = {
   isPro: boolean;
@@ -9,12 +10,14 @@ type SettingsState = {
   language: Setting['language'];
   currency: Setting['currency'];
   feeRate: number;
+  defaultPlatform: PlatformId;
   loaded: boolean;
   load: () => void;
   setFeeRate: (rate: number) => void;
   setTheme: (theme: Setting['theme']) => void;
   setLanguage: (language: Setting['language']) => void;
   setCurrency: (currency: Setting['currency']) => void;
+  setDefaultPlatform: (platform: PlatformId) => void;
   setPro: (value: boolean) => void;
 };
 
@@ -24,14 +27,19 @@ export const useSettingsStore = create<SettingsState>((set) => ({
   language: 'system',
   currency: 'auto',
   feeRate: DEFAULT_FEE_RATE,
+  defaultPlatform: 'ebay',
   loaded: false,
   load: () => {
     const s = ensureSettings();
-    set({ isPro: s.isPro, theme: s.theme, language: s.language, currency: s.currency, feeRate: s.feeRate, loaded: true });
+    set({ isPro: s.isPro, theme: s.theme, language: s.language, currency: s.currency, feeRate: s.feeRate, defaultPlatform: s.defaultPlatform as PlatformId, loaded: true });
   },
   setFeeRate: (rate) => {
     updateSettings({ feeRate: rate });
     set({ feeRate: rate });
+  },
+  setDefaultPlatform: (platform) => {
+    updateSettings({ defaultPlatform: platform });
+    set({ defaultPlatform: platform });
   },
   setTheme: (theme) => {
     updateSettings({ theme });

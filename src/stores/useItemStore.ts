@@ -16,7 +16,7 @@ import {
   updateItemRow,
 } from '@/db/queries';
 import type { Item, ItemImage, NewItem, SaleRecord } from '@/db/schema';
-import { actualProfit } from '@/utils/calculations';
+import { profitBps } from '@/utils/calculations';
 import { deleteImageFile, persistImage } from '@/utils/images';
 
 // フォームが返す写真の状態
@@ -32,6 +32,9 @@ export type ItemInput = {
   purchasePrice: number | null;
   expectedPrice: number;
   shippingFee: number;
+  platform: string | null;
+  feeRateBps: number;
+  feeFixedCents: number;
   location: string | null;
   condition: Item['condition'];
   status: Item['status'];
@@ -51,7 +54,7 @@ type ItemState = {
   recordSale: (
     itemId: string,
     sale: { actualPrice: number; actualShipping: number; soldAt: Date },
-    feeRate: number,
+    fee: { rateBps: number; fixedCents: number },
   ) => void;
   clearAllData: () => void;
 };
@@ -119,9 +122,9 @@ export const useItemStore = create<ItemState>((set) => ({
     set(refresh());
   },
 
-  recordSale: (itemId, sale, feeRate) => {
+  recordSale: (itemId, sale, fee) => {
     const now = new Date();
-    const profit = actualProfit(sale.actualPrice, feeRate, sale.actualShipping);
+    const profit = profitBps(sale.actualPrice, fee.rateBps, fee.fixedCents, sale.actualShipping);
     insertSale({
       id: Crypto.randomUUID(),
       itemId,

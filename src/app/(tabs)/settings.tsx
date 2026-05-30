@@ -10,6 +10,7 @@ import { useSettingsStore } from '@/stores/useSettingsStore';
 import { useItemStore } from '@/stores/useItemStore';
 import { useTranslation } from '@/i18n';
 import { CURRENCY_CODES } from '@/utils/money';
+import { PLATFORMS, PLATFORM_BY_ID, type PlatformId } from '@/constants/platforms';
 import { colors, type StatusKind } from '@/theme/tokens';
 import type { Setting } from '@/db/schema';
 
@@ -24,11 +25,14 @@ export default function SettingsScreen() {
   const setLanguage = useSettingsStore((s) => s.setLanguage);
   const currency = useSettingsStore((s) => s.currency);
   const setCurrency = useSettingsStore((s) => s.setCurrency);
+  const defaultPlatform = useSettingsStore((s) => s.defaultPlatform);
+  const setDefaultPlatform = useSettingsStore((s) => s.setDefaultPlatform);
   const isPro = useSettingsStore((s) => s.isPro);
   const clearAllData = useItemStore((s) => s.clearAllData);
   const [themeOpen, setThemeOpen] = React.useState(false);
   const [langOpen, setLangOpen] = React.useState(false);
   const [currencyOpen, setCurrencyOpen] = React.useState(false);
+  const [platformOpen, setPlatformOpen] = React.useState(false);
 
   const currencyLabel = (c: Setting['currency']) => (c === 'auto' ? t('settings.currencyAuto') : c);
 
@@ -95,6 +99,7 @@ export default function SettingsScreen() {
           <Row icon="palette" label={t('settings.theme')} value={themeLabel[theme]} onPress={() => setThemeOpen(true)} />
           <Row icon="doc" label={t('language.title')} value={langLabel[language]} onPress={() => setLangOpen(true)} />
           <Row icon="tag" label={t('settings.currency')} value={currencyLabel(currency)} onPress={() => setCurrencyOpen(true)} />
+          <Row icon="bag" label={t('platform.defaultTitle')} value={t(PLATFORM_BY_ID[defaultPlatform].labelKey)} onPress={() => setPlatformOpen(true)} />
           <Row icon="percent" label={t('settings.profitMethod')} value={t('settings.profitMethodValue')} onPress={() => router.push('/settings/info/profit')} />
           <Row icon="sliders" label={t('settings.statusEdit')} value={t('settings.statusFixed')} onPress={showStatuses} />
           <Row icon="folder" label={t('settings.categoryEdit')} onPress={() => router.push('/settings/categories')} isLast />
@@ -135,6 +140,14 @@ export default function SettingsScreen() {
         selectedKey={currency}
         onSelect={(k) => setCurrency(k as Setting['currency'])}
         onClose={() => setCurrencyOpen(false)}
+      />
+      <PickerSheet
+        visible={platformOpen}
+        title={t('platform.defaultTitle')}
+        options={PLATFORMS.map((p) => ({ key: p.id, label: t(p.labelKey) }))}
+        selectedKey={defaultPlatform}
+        onSelect={(k) => setDefaultPlatform(k as PlatformId)}
+        onClose={() => setPlatformOpen(false)}
       />
     </View>
   );

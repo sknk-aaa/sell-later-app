@@ -1,8 +1,7 @@
 import { useMemo } from 'react';
 import { useItemStore } from './useItemStore';
-import { useSettingsStore } from './useSettingsStore';
 import type { Item, SaleRecord } from '@/db/schema';
-import { expectedProfit } from '@/utils/calculations';
+import { profitBps } from '@/utils/calculations';
 import { colors, type StatusKind } from '@/theme/tokens';
 
 export type ItemVM = Item & {
@@ -26,7 +25,6 @@ export function useItemViewModels(): ItemVM[] {
   const items = useItemStore((s) => s.items);
   const images = useItemStore((s) => s.images);
   const sales = useItemStore((s) => s.sales);
-  const feeRate = useSettingsStore((s) => s.feeRate);
 
   return useMemo(
     () =>
@@ -41,10 +39,10 @@ export function useItemViewModels(): ItemVM[] {
           imagePath: imagePaths[0] ?? null,
           imagePaths,
           sale,
-          expectedProfit: expectedProfit(it.expectedPrice, feeRate, it.shippingFee),
+          expectedProfit: profitBps(it.expectedPrice, it.feeRateBps, it.feeFixedCents, it.shippingFee),
         };
       }),
-    [items, images, sales, feeRate],
+    [items, images, sales],
   );
 }
 

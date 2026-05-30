@@ -4,6 +4,7 @@ import { Icon, type IconName } from './Icon';
 import { ImageField } from './ImageField';
 import { PickerSheet } from './PickerSheet';
 import { CONDITIONS } from '@/constants/conditions';
+import { PLATFORMS, PLATFORM_BY_ID, type PlatformId } from '@/constants/platforms';
 import { useCategoryStore } from '@/stores/useCategoryStore';
 import { useTranslation } from '@/i18n';
 import { useCurrency } from '@/utils/useCurrency';
@@ -12,7 +13,7 @@ import { colors, numFont, type StatusKind } from '@/theme/tokens';
 import type { ItemCondition } from '@/db/schema';
 import type { ItemInput, PhotoValue } from '@/stores/useItemStore';
 import { useSettingsStore } from '@/stores/useSettingsStore';
-import { expectedProfit, feeAmount, profitRate } from '@/utils/calculations';
+import { feeAmountBps, profitBps, profitRate } from '@/utils/calculations';
 import { photoLimit } from '@/utils/limits';
 
 export type ProductFormHandle = {
@@ -26,15 +27,25 @@ type Props = {
   onRequestPro?: () => void;
 };
 
+// rateBps(1325) ↔ percent入力文字列("13.25")
+const bpsToStr = (bps: number) => {
+  const pct = bps / 100;
+  return Number.isInteger(pct) ? String(pct) : String(pct);
+};
+const strToBps = (s: string) => Math.round((Number(s.replace(/[^0-9.]/g, '') || '0')) * 100);
+
 export const ProductForm = React.forwardRef<ProductFormHandle, Props>(function ProductForm(
   { initial, initialPhotos, onValidityChange, onRequestPro },
   ref,
 ) {
   const { t } = useTranslation();
   const { fmt, symbol, sanitize, parse, toInput } = useCurrency();
-  const feeRate = useSettingsStore((s) => s.feeRate);
   const isPro = useSettingsStore((s) => s.isPro);
+  const defaultPlatform = useSettingsStore((s) => s.defaultPlatform);
   const categories = useCategoryStore((s) => s.categories);
+
+  const initPlatform = (initial?.platform as PlatformId | undefined) ?? defaultPlatform;
+  const initPreset = PLATFORM_BY_ID[initPlatform] ?? PLATFORM_BY_ID.ebay;
 
   const [name, setName] = React.useState(initial?.name ?? '');
   const [category, setCategory] = React.useState(initial?.category ?? '');
@@ -47,21 +58,40 @@ export const ProductForm = React.forwardRef<ProductFormHandle, Props>(function P
   const [shipping, setShipping] = React.useState(
     initial?.shippingFee != null ? toInput(initial.shippingFee) : '',
   );
+  const [platform, setPlatform] = React.useState<PlatformId>(initPlatform);
+  const [feeRateStr, setFeeRateStr] = React.useState(
+    bpsToStr(initial?.feeRateBps ?? initPreset.rateBps),
+  );
+  const [feeFixed, setFeeFixed] = React.useState(
+    initial?.feeFixedCents != null ? toInput(initial.feeFixedCents) : (initPreset.fixedCents ? toInput(initPreset.fixedCents) : ''),
+  );
   const [condition, setCondition] = React.useState<ItemCondition>(initial?.condition ?? 'new');
   const [status, setStatus] = React.useState<StatusKind>(initial?.status ?? 'stored');
   const [location, setLocation] = React.useState(initial?.location ?? '');
   const [memo, setMemo] = React.useState(initial?.memo ?? '');
   const [photos, setPhotos] = React.useState<PhotoValue[]>(initialPhotos ?? []);
-  const [picker, setPicker] = React.useState<null | 'category' | 'condition' | 'status'>(null);
+  const [picker, setPicker] = React.useState<null | 'category' | 'condition' | 'status' | 'platform'>(null);
+
+  const onSelectPlatform = (id: PlatformId) => {
+    setPlatform(id);
+    const preset = PLATFORM_BY_ID[id];
+    if (id !== 'custom' && preset) {
+      setFeeRateStr(bpsToStr(preset.rateBps));
+      setFeeFixed(preset.fixedCents ? toInput(preset.fixedCents) : '');
+    }
+  };
 
   const sellMinor = parse(sellPrice);
   const shipMinor = parse(shipping);
-  const fee = feeAmount(sellMinor, feeRate);
-  const profit = expectedProfit(sellMinor, feeRate, shipMinor);
+  const rateBps = strToBps(feeRateStr);
+  const fixedCents = parse(feeFixed);
+  const fee = feeAmountBps(sellMinor, rateBps, fixedCents);
+  const profit = profitBps(sellMinor, rateBps, fixedCents, shipMinor);
   const rate = profitRate(sellMinor, profit);
+  const feeRatePct = bpsToStr(rateBps);
+  const platformNoteKey = PLATFORM_BY_ID[platform]?.noteKey;
 
   const valid = name.trim().length > 0 && sellMinor > 0;
-  const feeRatePct = Math.round(feeRate * 100);
 
   React.useEffect(() => {
     onValidityChange?.(valid);
@@ -76,6 +106,9 @@ export const ProductForm = React.forwardRef<ProductFormHandle, Props>(function P
         purchasePrice: purchasePrice.trim() ? parse(purchasePrice) : null,
         expectedPrice: sellMinor,
         shippingFee: shipMinor,
+        platform,
+        feeRateBps: rateBps,
+        feeFixedCents: fixedCents,
         location: location.trim() || null,
         condition,
         status,
@@ -132,7 +165,27 @@ export const ProductForm = React.forwardRef<ProductFormHandle, Props>(function P
             <PriceInput label={t('form.sellPrice')} required value={sellPrice} onChange={setSellPrice} symbol={symbol} sanitize={sanitize} />
             <PriceInput label={t('form.shipping')} value={shipping} onChange={setShipping} symbol={symbol} sanitize={sanitize} />
           </View>
+
           <View style={styles.priceDivider} />
+
+          {/* Platform selector */}
+          <Pressable style={styles.platformRow} onPress={() => setPicker('platform')}>
+            <View style={styles.selectIcon}><Icon name="bag" size={16} color={colors.primary} /></View>
+            <Text style={styles.platformLabel}>{t('form.platform')}</Text>
+            <Text style={styles.platformValue}>{t(PLATFORM_BY_ID[platform].labelKey)}</Text>
+            <Icon name="chevR" size={16} color={colors.ink4} />
+          </Pressable>
+
+          {/* Editable rate / fixed fee */}
+          <View style={[styles.priceRow, { marginTop: 12 }]}>
+            <RateInput label={t('platform.feeRate')} value={feeRateStr} onChange={(v) => { setFeeRateStr(v); setPlatform('custom'); }} />
+            <PriceInput label={t('platform.fixedFee')} value={feeFixed} onChange={(v) => { setFeeFixed(v); setPlatform('custom'); }} symbol={symbol} sanitize={sanitize} />
+          </View>
+
+          {platformNoteKey && <Text style={styles.platformNote}>{t(platformNoteKey)}</Text>}
+
+          <View style={styles.priceDivider} />
+
           <View style={styles.priceRow}>
             <DerivedField label={t('form.fee', { rate: feeRatePct })} value={`-${fmt(fee)}`} />
             <DerivedField label={t('form.estProfit')} help value={fmt(profit)} profit />
@@ -202,6 +255,14 @@ export const ProductForm = React.forwardRef<ProductFormHandle, Props>(function P
         onClose={() => setPicker(null)}
       />
       <PickerSheet
+        visible={picker === 'platform'}
+        title={t('platform.title')}
+        options={PLATFORMS.map((p) => ({ key: p.id, label: t(p.labelKey) }))}
+        selectedKey={platform}
+        onSelect={(k) => onSelectPlatform(k as PlatformId)}
+        onClose={() => setPicker(null)}
+      />
+      <PickerSheet
         visible={picker === 'condition'}
         title={t('form.condition')}
         options={CONDITIONS.map((c) => ({ key: c.key, label: t(`condition.${c.key}`) }))}
@@ -265,11 +326,32 @@ function PriceInput({ label, value, onChange, required, help, symbol, sanitize }
   );
 }
 
+function RateInput({ label, value, onChange }: { label: string; value: string; onChange: (t: string) => void }) {
+  return (
+    <View style={{ flex: 1 }}>
+      <View style={styles.priceLabelRow}>
+        <Text style={styles.priceLabel} numberOfLines={1}>{label}</Text>
+      </View>
+      <View style={styles.priceValueBox}>
+        <TextInput
+          value={value}
+          onChangeText={(tx) => onChange(tx.replace(/[^0-9.]/g, ''))}
+          keyboardType="decimal-pad"
+          placeholder="0"
+          placeholderTextColor={colors.ink4}
+          style={styles.priceInput}
+        />
+        <Text style={styles.yenMark}>%</Text>
+      </View>
+    </View>
+  );
+}
+
 function DerivedField({ label, value, profit, help }: { label: string; value: string; profit?: boolean; help?: boolean }) {
   return (
     <View style={{ flex: 1 }}>
       <View style={styles.derivedLabelRow}>
-        <Text style={styles.derivedLabel}>{label}</Text>
+        <Text style={styles.derivedLabel} numberOfLines={1}>{label}</Text>
         {help && <Icon name="helpCircle" size={11} color={colors.ink4} />}
       </View>
       <Text style={[styles.derivedValue, profit && { color: colors.profit }]}>{value}</Text>
@@ -301,6 +383,11 @@ const styles = StyleSheet.create({
   priceValueBox: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 8, paddingVertical: 8, paddingHorizontal: 10, flexDirection: 'row', alignItems: 'center', gap: 2 },
   yenMark: { fontSize: 14, fontWeight: '600', color: colors.ink1, ...numFont },
   priceInput: { flex: 1, fontSize: 15, fontWeight: '600', color: colors.ink1, padding: 0, ...numFont },
+
+  platformRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  platformLabel: { fontSize: 13, color: colors.ink2, fontWeight: '600' },
+  platformValue: { flex: 1, fontSize: 14, color: colors.ink1, textAlign: 'right' },
+  platformNote: { fontSize: 11, color: colors.ink3, lineHeight: 16, marginTop: 10 },
 
   derivedLabelRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, marginBottom: 6 },
   derivedLabel: { fontSize: 11, color: colors.ink3 },

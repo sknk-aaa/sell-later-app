@@ -11,10 +11,10 @@ import { useTranslation } from '@/i18n';
 import { useCurrency } from '@/utils/useCurrency';
 import { useItemStore } from '@/stores/useItemStore';
 import { useItemViewModel } from '@/stores/selectors';
-import { useSettingsStore } from '@/stores/useSettingsStore';
 import { STATUS } from '@/theme/status';
 import { colors, numFont, shadowCard } from '@/theme/tokens';
-import { feeAmount, profitRate } from '@/utils/calculations';
+import { feeAmountBps, profitRate } from '@/utils/calculations';
+import { bpsToPercentLabel } from '@/constants/platforms';
 import { formatDate } from '@/utils/format';
 
 export default function DetailScreen() {
@@ -24,9 +24,9 @@ export default function DetailScreen() {
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
   const vm = useItemViewModel(id);
-  const feeRate = useSettingsStore((s) => s.feeRate);
   const toggleFavorite = useItemStore((s) => s.toggleFavorite);
   const deleteItem = useItemStore((s) => s.deleteItem);
+  const [activePhoto, setActivePhoto] = React.useState(0);
 
   if (!vm) {
     return (
@@ -37,14 +37,13 @@ export default function DetailScreen() {
     );
   }
 
-  const fee = feeAmount(vm.expectedPrice, feeRate);
+  const fee = feeAmountBps(vm.expectedPrice, vm.feeRateBps, vm.feeFixedCents);
   const profit = vm.expectedProfit;
   const rate = profitRate(vm.expectedPrice, profit);
   const isSold = vm.status === 'sold';
-  const [activePhoto, setActivePhoto] = React.useState(0);
   const photos = vm.imagePaths;
   const active = Math.min(activePhoto, Math.max(0, photos.length - 1));
-  const feeRatePct = Math.round(feeRate * 100);
+  const feeRatePct = bpsToPercentLabel(vm.feeRateBps);
 
   const onDelete = () => {
     Alert.alert(t('item.deleteTitle'), t('item.deleteMsg', { name: vm.name }), [
