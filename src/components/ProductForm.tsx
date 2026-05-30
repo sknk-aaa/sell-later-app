@@ -3,8 +3,9 @@ import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Icon, type IconName } from './Icon';
 import { ImageField } from './ImageField';
 import { PickerSheet } from './PickerSheet';
-import { CONDITIONS, CONDITION_LABEL } from '@/constants/conditions';
+import { CONDITIONS } from '@/constants/conditions';
 import { useCategoryStore } from '@/stores/useCategoryStore';
+import { useTranslation } from '@/i18n';
 import { STATUS } from '@/theme/status';
 import { colors, numFont, type StatusKind } from '@/theme/tokens';
 import type { ItemCondition } from '@/db/schema';
@@ -32,6 +33,7 @@ export const ProductForm = React.forwardRef<ProductFormHandle, Props>(function P
   { initial, initialPhotos, onValidityChange, onRequestPro },
   ref,
 ) {
+  const { t } = useTranslation();
   const feeRate = useSettingsStore((s) => s.feeRate);
   const isPro = useSettingsStore((s) => s.isPro);
   const categories = useCategoryStore((s) => s.categories);
@@ -60,7 +62,7 @@ export const ProductForm = React.forwardRef<ProductFormHandle, Props>(function P
   const profit = expectedProfit(sellNum, feeRate, shipNum);
   const rate = profitRate(sellNum, profit);
 
-  const valid = name.trim().length > 0 && category.length > 0 && sellNum > 0;
+  const valid = name.trim().length > 0 && sellNum > 0;
 
   React.useEffect(() => {
     onValidityChange?.(valid);
@@ -71,7 +73,7 @@ export const ProductForm = React.forwardRef<ProductFormHandle, Props>(function P
       if (!valid) return null;
       const values: ItemInput = {
         name: name.trim(),
-        category,
+        category: category || t('form.selectCategory'),
         purchasePrice: purchasePrice.trim() ? toNum(purchasePrice) : null,
         expectedPrice: sellNum,
         shippingFee: shipNum,
@@ -84,6 +86,8 @@ export const ProductForm = React.forwardRef<ProductFormHandle, Props>(function P
     },
   }));
 
+  const feeRatePct = Math.round(feeRate * 100);
+
   return (
     <View>
       <ImageField
@@ -94,15 +98,15 @@ export const ProductForm = React.forwardRef<ProductFormHandle, Props>(function P
         onLocked={() => onRequestPro?.()}
       />
 
-      {/* 商品名 */}
+      {/* Item name */}
       <View style={styles.field}>
-        <FieldLabel label="商品名" required />
+        <FieldLabel label={t('form.itemName')} required />
         <View style={styles.inputBox}>
           <TextInput
             value={name}
             onChangeText={setName}
             maxLength={100}
-            placeholder="商品名を入力"
+            placeholder={t('form.itemNamePlaceholder')}
             placeholderTextColor={colors.ink4}
             style={styles.input}
           />
@@ -110,66 +114,66 @@ export const ProductForm = React.forwardRef<ProductFormHandle, Props>(function P
         </View>
       </View>
 
-      {/* カテゴリ */}
+      {/* Category */}
       <View style={styles.field}>
-        <FieldLabel label="カテゴリ" required />
+        <FieldLabel label={t('form.category')} />
         <Pressable style={styles.selectBox} onPress={() => setPicker('category')}>
           <View style={styles.selectIcon}><Icon name="tag" size={16} color={colors.primary} /></View>
           <Text style={[styles.selectText, !category && styles.placeholder]}>
-            {category || '選択してください'}
+            {category || t('form.selectCategory')}
           </Text>
           <Icon name="chevR" size={16} color={colors.ink4} />
         </Pressable>
       </View>
 
-      {/* 価格情報 */}
+      {/* Pricing */}
       <View style={styles.fieldLg}>
-        <Text style={styles.sectionTitle}>価格情報</Text>
+        <Text style={styles.sectionTitle}>{t('form.pricing')}</Text>
         <View style={styles.priceBox}>
           <View style={styles.priceRow}>
-            <PriceInput label="購入価格" help value={purchasePrice} onChange={setPurchasePrice} />
-            <PriceInput label="見込み売却価格" required value={sellPrice} onChange={setSellPrice} />
-            <PriceInput label="送料" required value={shipping} onChange={setShipping} />
+            <PriceInput label={t('form.purchasePrice')} help value={purchasePrice} onChange={setPurchasePrice} />
+            <PriceInput label={t('form.sellPrice')} required value={sellPrice} onChange={setSellPrice} />
+            <PriceInput label={t('form.shipping')} required value={shipping} onChange={setShipping} />
           </View>
           <View style={styles.priceDivider} />
           <View style={styles.priceRow}>
-            <DerivedField label="メルカリ手数料 (10%)" value={`-${yen(fee)}`} />
-            <DerivedField label="見込み利益" help value={yen(profit)} profit />
-            <DerivedField label="利益率" help value={`${rate.toFixed(1)}%`} />
+            <DerivedField label={t('form.fee', { rate: feeRatePct })} value={`-${yen(fee)}`} />
+            <DerivedField label={t('form.estProfit')} help value={yen(profit)} profit />
+            <DerivedField label={t('form.profitRate')} help value={`${rate.toFixed(1)}%`} />
           </View>
         </View>
       </View>
 
-      {/* 商品の詳細 */}
+      {/* Details */}
       <View style={styles.fieldLg}>
-        <Text style={styles.sectionTitle}>商品の詳細</Text>
+        <Text style={styles.sectionTitle}>{t('form.details')}</Text>
         <View style={styles.listCard}>
           <Pressable style={[styles.detailRow, styles.detailRowBorder]} onPress={() => setPicker('condition')}>
             <View style={styles.detailIcon}><Icon name="star" size={15} color={colors.primary} /></View>
-            <Text style={styles.detailLabel}>状態</Text>
+            <Text style={styles.detailLabel}>{t('form.condition')}</Text>
             <RequiredBadge small />
-            <Text style={styles.rowValue}>{CONDITION_LABEL[condition]}</Text>
+            <Text style={styles.rowValue}>{t(`condition.${condition}`)}</Text>
             <Icon name="chevR" size={14} color={colors.ink4} />
           </Pressable>
 
           <Pressable style={[styles.detailRow, styles.detailRowBorder]} onPress={() => setPicker('status')}>
             <View style={styles.detailIcon}><Icon name="flag" size={15} color={colors.primary} /></View>
-            <Text style={styles.detailLabel}>ステータス</Text>
+            <Text style={styles.detailLabel}>{t('form.status')}</Text>
             <RequiredBadge small />
             <View style={styles.statusValue}>
               <View style={[styles.dot, { backgroundColor: STATUS[status].dotColor }]} />
-              <Text style={styles.rowValue}>{STATUS[status].label}</Text>
+              <Text style={styles.rowValue}>{t(`status.${status}`)}</Text>
             </View>
             <Icon name="chevR" size={14} color={colors.ink4} />
           </Pressable>
 
           <View style={styles.detailRow}>
             <View style={styles.detailIcon}><Icon name="calendar" size={15} color={colors.primary} /></View>
-            <Text style={styles.detailLabel}>保管場所</Text>
+            <Text style={styles.detailLabel}>{t('form.location')}</Text>
             <TextInput
               value={location}
               onChangeText={setLocation}
-              placeholder="任意"
+              placeholder={t('common.optional')}
               placeholderTextColor={colors.ink4}
               style={styles.inlineInput}
             />
@@ -177,14 +181,14 @@ export const ProductForm = React.forwardRef<ProductFormHandle, Props>(function P
         </View>
       </View>
 
-      {/* メモ */}
+      {/* Memo */}
       <View style={styles.fieldLg}>
-        <FieldLabel label="メモ" />
+        <FieldLabel label={t('form.memo')} />
         <View style={styles.memoBox}>
           <TextInput
             value={memo}
             onChangeText={setMemo}
-            placeholder="任意（自由に入力できます）"
+            placeholder={t('form.memoPlaceholder')}
             placeholderTextColor={colors.ink4}
             multiline
             style={styles.memoInput}
@@ -194,7 +198,7 @@ export const ProductForm = React.forwardRef<ProductFormHandle, Props>(function P
 
       <PickerSheet
         visible={picker === 'category'}
-        title="カテゴリを選択"
+        title={t('form.category')}
         options={categories.map((c) => ({ key: c.name, label: c.name }))}
         selectedKey={category}
         onSelect={(k) => setCategory(k)}
@@ -202,18 +206,18 @@ export const ProductForm = React.forwardRef<ProductFormHandle, Props>(function P
       />
       <PickerSheet
         visible={picker === 'condition'}
-        title="状態を選択"
-        options={CONDITIONS.map((c) => ({ key: c.key, label: c.label }))}
+        title={t('form.condition')}
+        options={CONDITIONS.map((c) => ({ key: c.key, label: t(`condition.${c.key}`) }))}
         selectedKey={condition}
         onSelect={(k) => setCondition(k as ItemCondition)}
         onClose={() => setPicker(null)}
       />
       <PickerSheet
         visible={picker === 'status'}
-        title="ステータスを選択"
+        title={t('form.status')}
         options={(['stored', 'prep', 'listed', 'sold', 'hold'] as StatusKind[]).map((k) => ({
           key: k,
-          label: STATUS[k].label,
+          label: t(`status.${k}`),
         }))}
         selectedKey={status}
         onSelect={(k) => setStatus(k as StatusKind)}
@@ -224,9 +228,10 @@ export const ProductForm = React.forwardRef<ProductFormHandle, Props>(function P
 });
 
 function RequiredBadge({ small }: { small?: boolean }) {
+  const { t } = useTranslation();
   return (
     <View style={[styles.reqBadge, small && styles.reqBadgeSm]}>
-      <Text style={[styles.reqText, small && styles.reqTextSm]}>必須</Text>
+      <Text style={[styles.reqText, small && styles.reqTextSm]}>{t('common.required')}</Text>
     </View>
   );
 }
@@ -240,11 +245,7 @@ function FieldLabel({ label, required }: { label: string; required?: boolean }) 
   );
 }
 
-function PriceInput({
-  label, value, onChange, required, help,
-}: {
-  label: string; value: string; onChange: (t: string) => void; required?: boolean; help?: boolean;
-}) {
+function PriceInput({ label, value, onChange, required, help }: { label: string; value: string; onChange: (t: string) => void; required?: boolean; help?: boolean }) {
   return (
     <View style={{ flex: 1 }}>
       <View style={styles.priceLabelRow}>

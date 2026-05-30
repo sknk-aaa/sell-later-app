@@ -8,6 +8,7 @@ import { LineChart } from '@/components/charts/LineChart';
 import { PickerSheet } from '@/components/PickerSheet';
 import { LargeTitleHeader } from '@/components/headers';
 import { AdBanner } from '@/components/AdBanner';
+import { useTranslation } from '@/i18n';
 import { useAnalytics, type AnalyticsPeriod } from '@/stores/selectors';
 import { useSettingsStore } from '@/stores/useSettingsStore';
 import { STATUS } from '@/theme/status';
@@ -16,7 +17,6 @@ import { yen } from '@/utils/format';
 
 type Tab = 'summary' | 'expected' | 'sold';
 
-const PERIOD_LABEL: Record<AnalyticsPeriod, string> = { month: '今月', year: '今年', all: 'すべて' };
 const STATUS_ORDER: StatusKind[] = ['stored', 'prep', 'listed', 'sold', 'hold'];
 const STATUS_DONUT_COLOR: Record<StatusKind, string> = {
   stored: '#C9CDD3',
@@ -28,6 +28,7 @@ const STATUS_DONUT_COLOR: Record<StatusKind, string> = {
 
 export default function AnalyticsScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const isPro = useSettingsStore((s) => s.isPro);
   const [tab, setTab] = React.useState<Tab>('summary');
   const [period, setPeriod] = React.useState<AnalyticsPeriod>('all');
@@ -36,31 +37,36 @@ export default function AnalyticsScreen() {
   const chartW = width - 32 - 12;
   const a = useAnalytics(period);
 
+  const periodLabel: Record<AnalyticsPeriod, string> = {
+    month: t('analytics.periodMonth'),
+    year: t('analytics.periodYear'),
+    all: t('analytics.periodAll'),
+  };
+
   if (!isPro) {
     const statusDonutDataFree = STATUS_ORDER.map((k) => ({ value: a.statusCounts[k], color: STATUS_DONUT_COLOR[k] }));
     const tiles: TileDef[] = [
-      { color: colors.primary, bg: colors.primarySoft, icon: 'tag', label: '想定売上合計', value: yen(a.expectedSalesTotal), sub: '—' },
-      { color: colors.profit, bg: 'rgba(16,185,129,0.12)', icon: 'chartLine', label: '想定利益合計', value: yen(a.expectedProfitTotal), sub: '—' },
-      { color: colors.statusHold, bg: colors.statusHoldBg, icon: 'bag', label: '売却済み利益', value: yen(a.soldProfitTotal), sub: thisMonth(a.thisMonthProfit, yen) },
-      { color: colors.statusPrep, bg: colors.statusPrepBg, icon: 'archive', label: '売却済み件数', value: `${a.soldCount}件`, sub: thisMonth(a.thisMonthCount, (n) => `${n}件`) },
+      { color: colors.primary, bg: colors.primarySoft, icon: 'tag', label: t('home.totalSales'), value: yen(a.expectedSalesTotal), sub: '—' },
+      { color: colors.profit, bg: 'rgba(16,185,129,0.12)', icon: 'chartLine', label: t('home.totalProfit'), value: yen(a.expectedProfitTotal), sub: '—' },
+      { color: colors.statusHold, bg: colors.statusHoldBg, icon: 'bag', label: t('analytics.soldProfit'), value: yen(a.soldProfitTotal), sub: t('analytics.thisMonth', { val: yen(a.thisMonthProfit) }) },
+      { color: colors.statusPrep, bg: colors.statusPrepBg, icon: 'archive', label: t('analytics.soldCount'), value: `${a.soldCount}`, sub: t('analytics.thisMonth', { val: String(a.thisMonthCount) }) },
     ];
     return (
       <View style={styles.screen}>
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 24 }}>
-          <LargeTitleHeader title="分析" />
+          <LargeTitleHeader title={t('analytics.title')} />
 
-          {/* 無料でも見えるサマリー（味見） */}
           <Card style={{ padding: 14 }}>
-            <View style={styles.tilesRow}>{tiles.map((t) => <BigTile key={t.label} {...t} />)}</View>
+            <View style={styles.tilesRow}>{tiles.map((tl) => <BigTile key={tl.label} {...tl} />)}</View>
           </Card>
 
-          <SectionHead title="カテゴリ別 想定売上" titleSize={15} />
+          <SectionHead title={t('analytics.byCatExpected')} titleSize={15} />
           <Card>
             {a.categoryExpected.length === 0 ? (
-              <Text style={styles.emptyInline}>データがありません</Text>
+              <Text style={styles.emptyInline}>{t('analytics.noData')}</Text>
             ) : (
               <View style={styles.donutRow}>
-                <Donut data={a.categoryExpected} size={150} thickness={26} centerLabel="合計" centerValue={yen(a.expectedSalesTotal)} />
+                <Donut data={a.categoryExpected} size={150} thickness={26} centerLabel={t('common.total')} centerValue={yen(a.expectedSalesTotal)} />
                 <View style={styles.legend}>
                   {a.categoryExpected.map((c) => (
                     <View key={c.name} style={styles.legendRow}>
@@ -75,31 +81,30 @@ export default function AnalyticsScreen() {
             )}
           </Card>
 
-          {/* ここから下はPro限定（グレーで予告） */}
           <View style={styles.lockedPreview}>
             <View style={styles.lockedFade} pointerEvents="none">
-              <SectionHead title="ステータス別 件数" titleSize={15} />
+              <SectionHead title={t('analytics.byStatus')} titleSize={15} />
               <Card>
                 <View style={styles.donutRow}>
-                  <Donut data={statusDonutDataFree} size={130} thickness={22} centerLabel="合計" centerValue={`${a.statusTotal}件`} />
+                  <Donut data={statusDonutDataFree} size={130} thickness={22} centerLabel={t('common.total')} centerValue={`${a.statusTotal}`} />
                   <View style={styles.legend}>
                     {STATUS_ORDER.map((k) => (
                       <View key={k} style={styles.legendRow}>
                         <View style={[styles.legendDot, { backgroundColor: STATUS_DONUT_COLOR[k] }]} />
-                        <Text style={styles.legendName}>{STATUS[k].label}</Text>
-                        <Text style={styles.legendValue}>{a.statusCounts[k]}件</Text>
+                        <Text style={styles.legendName}>{t(`status.${k}`)}</Text>
+                        <Text style={styles.legendValue}>{a.statusCounts[k]}</Text>
                       </View>
                     ))}
                   </View>
                 </View>
               </Card>
-              <SectionHead title="月別 売却実績サマリー" titleSize={15} />
+              <SectionHead title={t('analytics.monthlySummary')} titleSize={15} />
               <Card style={{ padding: 0, overflow: 'hidden' }}>
                 <View style={[styles.tableRow, styles.tableHead]}>
-                  <Text style={[styles.th, styles.cMonth]}>月</Text>
-                  <Text style={[styles.th, styles.cCount]}>件数</Text>
-                  <Text style={[styles.th, styles.cFlex]}>売却額</Text>
-                  <Text style={[styles.th, styles.cFlex]}>利益</Text>
+                  <Text style={[styles.th, styles.cMonth]}>—</Text>
+                  <Text style={[styles.th, styles.cCount]}>—</Text>
+                  <Text style={[styles.th, styles.cFlex]}>—</Text>
+                  <Text style={[styles.th, styles.cFlex]}>—</Text>
                 </View>
                 {[0, 1, 2].map((i) => (
                   <View key={i} style={[styles.tableRow, i !== 2 && styles.tableRowBorder]}>
@@ -115,9 +120,9 @@ export default function AnalyticsScreen() {
               <View style={styles.lockedScrim} pointerEvents="none" />
               <View style={styles.lockedCard}>
                 <View style={styles.lockIcon}><Icon name="chart" size={30} color={colors.primary} /></View>
-                <Text style={styles.lockTitle}>Proでもっと詳しく</Text>
-                <Text style={styles.lockText}>月別の利益推移・カテゴリ別の売却利益・{'\n'}ステータス別の内訳・売却実績が見られます。</Text>
-                <Button label="Proにアップグレード" variant="primary" icon="crown" iconColor="#fff" onPress={() => router.push('/paywall')} style={{ marginTop: 16, paddingHorizontal: 24 }} />
+                <Text style={styles.lockTitle}>{t('analytics.proMore')}</Text>
+                <Text style={styles.lockText}>{t('analytics.proDesc')}</Text>
+                <Button label={t('common.upgrade')} variant="primary" icon="crown" iconColor="#fff" onPress={() => router.push('/paywall')} style={{ marginTop: 16, paddingHorizontal: 24 }} />
               </View>
             </View>
           </View>
@@ -131,66 +136,65 @@ export default function AnalyticsScreen() {
   const statusDonutData = STATUS_ORDER.map((k) => ({ value: a.statusCounts[k], color: STATUS_DONUT_COLOR[k] }));
   const monthlyMax = Math.max(...a.monthlyProfit.map((m) => m.value), 0);
 
+  const tabDefs: { k: Tab; l: string }[] = [
+    { k: 'summary', l: t('analytics.tabSummary') },
+    { k: 'expected', l: t('analytics.tabExpected') },
+    { k: 'sold', l: t('analytics.tabSold') },
+  ];
+
   return (
     <View style={styles.screen}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 24 }}>
         <LargeTitleHeader
-          title="分析"
+          title={t('analytics.title')}
           right={
             <Pressable style={styles.periodBtn} onPress={() => setPeriodOpen(true)}>
               <Icon name="calendar" size={14} color={colors.ink3} />
-              <Text style={styles.periodText}>{PERIOD_LABEL[period]}</Text>
+              <Text style={styles.periodText}>{periodLabel[period]}</Text>
               <Icon name="chevD" size={12} color={colors.ink3} />
             </Pressable>
           }
         />
 
-        {/* Tabs */}
         <View style={styles.tabs}>
-          {([
-            { k: 'summary', l: 'サマリー' },
-            { k: 'expected', l: '想定データ' },
-            { k: 'sold', l: '売却済みデータ' },
-          ] as const).map((t) => (
-            <Pressable key={t.k} onPress={() => setTab(t.k)} style={[styles.tabBtn, tab === t.k && styles.tabBtnActive]}>
-              <Text style={[styles.tabText, { color: tab === t.k ? colors.primary : colors.ink3 }]}>{t.l}</Text>
+          {tabDefs.map((td) => (
+            <Pressable key={td.k} onPress={() => setTab(td.k)} style={[styles.tabBtn, tab === td.k && styles.tabBtnActive]}>
+              <Text style={[styles.tabText, { color: tab === td.k ? colors.primary : colors.ink3 }]}>{td.l}</Text>
             </Pressable>
           ))}
         </View>
 
-        {/* Summary tiles */}
         <Card style={{ padding: 14 }}>
           <View style={styles.tilesRow}>
             {(tab === 'sold'
               ? ([
-                  { color: colors.statusHold, bg: colors.statusHoldBg, icon: 'bag', label: '売却済み利益', value: yen(a.soldProfitTotal), sub: thisMonth(a.thisMonthProfit, yen) },
-                  { color: colors.statusPrep, bg: colors.statusPrepBg, icon: 'archive', label: '売却済み件数', value: `${a.soldCount}件`, sub: thisMonth(a.thisMonthCount, (n) => `${n}件`) },
+                  { color: colors.statusHold, bg: colors.statusHoldBg, icon: 'bag', label: t('analytics.soldProfit'), value: yen(a.soldProfitTotal), sub: t('analytics.thisMonth', { val: yen(a.thisMonthProfit) }) },
+                  { color: colors.statusPrep, bg: colors.statusPrepBg, icon: 'archive', label: t('analytics.soldCount'), value: `${a.soldCount}`, sub: t('analytics.thisMonth', { val: String(a.thisMonthCount) }) },
                 ] as TileDef[])
               : tab === 'expected'
                 ? ([
-                    { color: colors.primary, bg: colors.primarySoft, icon: 'tag', label: '想定売上合計', value: yen(a.expectedSalesTotal), sub: '—' },
-                    { color: colors.profit, bg: 'rgba(16,185,129,0.12)', icon: 'chartLine', label: '想定利益合計', value: yen(a.expectedProfitTotal), sub: '—' },
+                    { color: colors.primary, bg: colors.primarySoft, icon: 'tag', label: t('home.totalSales'), value: yen(a.expectedSalesTotal), sub: '—' },
+                    { color: colors.profit, bg: 'rgba(16,185,129,0.12)', icon: 'chartLine', label: t('home.totalProfit'), value: yen(a.expectedProfitTotal), sub: '—' },
                   ] as TileDef[])
                 : ([
-                    { color: colors.primary, bg: colors.primarySoft, icon: 'tag', label: '想定売上合計', value: yen(a.expectedSalesTotal), sub: '—' },
-                    { color: colors.profit, bg: 'rgba(16,185,129,0.12)', icon: 'chartLine', label: '想定利益合計', value: yen(a.expectedProfitTotal), sub: '—' },
-                    { color: colors.statusHold, bg: colors.statusHoldBg, icon: 'bag', label: '売却済み利益', value: yen(a.soldProfitTotal), sub: thisMonth(a.thisMonthProfit, yen) },
-                    { color: colors.statusPrep, bg: colors.statusPrepBg, icon: 'archive', label: '売却済み件数', value: `${a.soldCount}件`, sub: thisMonth(a.thisMonthCount, (n) => `${n}件`) },
+                    { color: colors.primary, bg: colors.primarySoft, icon: 'tag', label: t('home.totalSales'), value: yen(a.expectedSalesTotal), sub: '—' },
+                    { color: colors.profit, bg: 'rgba(16,185,129,0.12)', icon: 'chartLine', label: t('home.totalProfit'), value: yen(a.expectedProfitTotal), sub: '—' },
+                    { color: colors.statusHold, bg: colors.statusHoldBg, icon: 'bag', label: t('analytics.soldProfit'), value: yen(a.soldProfitTotal), sub: t('analytics.thisMonth', { val: yen(a.thisMonthProfit) }) },
+                    { color: colors.statusPrep, bg: colors.statusPrepBg, icon: 'archive', label: t('analytics.soldCount'), value: `${a.soldCount}`, sub: t('analytics.thisMonth', { val: String(a.thisMonthCount) }) },
                   ] as TileDef[])
-            ).map((t) => <BigTile key={t.label} {...t} />)}
+            ).map((tl) => <BigTile key={tl.label} {...tl} />)}
           </View>
         </Card>
 
-        {/* カテゴリ別 想定売上（summary / expected） */}
         {tab !== 'sold' && (
           <>
-            <SectionHead title="カテゴリ別 想定売上" titleSize={15} />
+            <SectionHead title={t('analytics.byCatExpected')} titleSize={15} />
             <Card>
               {a.categoryExpected.length === 0 ? (
-                <Text style={styles.emptyInline}>データがありません</Text>
+                <Text style={styles.emptyInline}>{t('analytics.noData')}</Text>
               ) : (
                 <View style={styles.donutRow}>
-                  <Donut data={a.categoryExpected} size={150} thickness={26} centerLabel="合計" centerValue={yen(a.expectedSalesTotal)} />
+                  <Donut data={a.categoryExpected} size={150} thickness={26} centerLabel={t('common.total')} centerValue={yen(a.expectedSalesTotal)} />
                   <View style={styles.legend}>
                     {a.categoryExpected.map((c) => (
                       <View key={c.name} style={styles.legendRow}>
@@ -207,20 +211,19 @@ export default function AnalyticsScreen() {
           </>
         )}
 
-        {/* 月別 売却済み利益（summary / sold） */}
         {tab !== 'expected' && (
           <>
-            <SectionHead title="月別 売却済み利益の推移" titleSize={15} />
+            <SectionHead title={t('analytics.monthly')} titleSize={15} />
             <Card style={{ paddingHorizontal: 6, paddingVertical: 14 }}>
               {monthlyMax === 0 ? (
-                <Text style={styles.emptyInline}>売却データがありません</Text>
+                <Text style={styles.emptyInline}>{t('analytics.noSalesData')}</Text>
               ) : (
                 <LineChart
                   data={a.monthlyProfit}
                   w={chartW}
                   h={200}
                   highlightIdx={11}
-                  highlightLabel="今月"
+                  highlightLabel={t('analytics.periodMonth')}
                   highlightValue={yen(a.monthlyProfit[11].value)}
                 />
               )}
@@ -228,22 +231,21 @@ export default function AnalyticsScreen() {
           </>
         )}
 
-        {/* ステータス別件数（summary / expected） */}
         {tab !== 'sold' && (
           <>
-            <SectionHead title="ステータス別 件数" titleSize={15} />
+            <SectionHead title={t('analytics.byStatus')} titleSize={15} />
             <Card>
               {a.statusTotal === 0 ? (
-                <Text style={styles.emptyInline}>データがありません</Text>
+                <Text style={styles.emptyInline}>{t('analytics.noData')}</Text>
               ) : (
                 <View style={styles.donutRow}>
-                  <Donut data={statusDonutData} size={130} thickness={22} centerLabel="合計" centerValue={`${a.statusTotal}件`} />
+                  <Donut data={statusDonutData} size={130} thickness={22} centerLabel={t('common.total')} centerValue={`${a.statusTotal}`} />
                   <View style={styles.legend}>
                     {STATUS_ORDER.map((k) => (
                       <View key={k} style={styles.legendRow}>
                         <View style={[styles.legendDot, { backgroundColor: STATUS_DONUT_COLOR[k] }]} />
-                        <Text style={styles.legendName}>{STATUS[k].label}</Text>
-                        <Text style={styles.legendValue}>{a.statusCounts[k]}件</Text>
+                        <Text style={styles.legendName}>{t(`status.${k}`)}</Text>
+                        <Text style={styles.legendValue}>{a.statusCounts[k]}</Text>
                       </View>
                     ))}
                   </View>
@@ -253,13 +255,12 @@ export default function AnalyticsScreen() {
           </>
         )}
 
-        {/* カテゴリ別 売却済み利益（sold） */}
         {tab === 'sold' && (
           <>
-            <SectionHead title="カテゴリ別 売却済み利益" titleSize={15} />
+            <SectionHead title={t('analytics.byCatSold')} titleSize={15} />
             <Card>
               {a.categorySold.length === 0 ? (
-                <Text style={styles.emptyInline}>売却データがありません</Text>
+                <Text style={styles.emptyInline}>{t('analytics.noSalesData')}</Text>
               ) : (
                 <View style={{ gap: 12 }}>
                   {a.categorySold.map((b) => {
@@ -285,26 +286,25 @@ export default function AnalyticsScreen() {
           </>
         )}
 
-        {/* 月別 売却実績サマリー（summary / sold） */}
         {tab !== 'expected' && (
           <>
-            <SectionHead title="月別 売却実績サマリー" titleSize={15} />
+            <SectionHead title={t('analytics.monthlySummary')} titleSize={15} />
             <Card style={{ padding: 0, overflow: 'hidden' }}>
               {a.table.length === 0 ? (
-                <Text style={[styles.emptyInline, { paddingVertical: 20 }]}>売却データがありません</Text>
+                <Text style={[styles.emptyInline, { paddingVertical: 20 }]}>{t('analytics.noSalesData')}</Text>
               ) : (
                 <>
                   <View style={[styles.tableRow, styles.tableHead]}>
-                    <Text style={[styles.th, styles.cMonth]}>月</Text>
-                    <Text style={[styles.th, styles.cCount]}>件数</Text>
-                    <Text style={[styles.th, styles.cFlex]}>売却額</Text>
-                    <Text style={[styles.th, styles.cFlex]}>送料</Text>
-                    <Text style={[styles.th, styles.cFlex]}>利益</Text>
+                    <Text style={[styles.th, styles.cMonth]}>Month</Text>
+                    <Text style={[styles.th, styles.cCount]}>#</Text>
+                    <Text style={[styles.th, styles.cFlex]}>Sales</Text>
+                    <Text style={[styles.th, styles.cFlex]}>Ship</Text>
+                    <Text style={[styles.th, styles.cFlex]}>Profit</Text>
                   </View>
                   {a.table.map((r, i) => (
                     <View key={r.label} style={[styles.tableRow, i !== a.table.length - 1 && styles.tableRowBorder]}>
                       <Text style={[styles.td, styles.cMonth]}>{r.label}</Text>
-                      <Text style={[styles.td, styles.cCount]}>{r.count}件</Text>
+                      <Text style={[styles.td, styles.cCount]}>{r.count}</Text>
                       <Text style={[styles.td, styles.cFlex, numFont]}>{yen(r.salesSum)}</Text>
                       <Text style={[styles.td, styles.cFlex, numFont]}>{yen(r.shipSum)}</Text>
                       <Text style={[styles.td, styles.cFlex, styles.tdProfit]}>{yen(r.profitSum)}</Text>
@@ -319,8 +319,8 @@ export default function AnalyticsScreen() {
 
       <PickerSheet
         visible={periodOpen}
-        title="期間を選択"
-        options={(Object.keys(PERIOD_LABEL) as AnalyticsPeriod[]).map((k) => ({ key: k, label: PERIOD_LABEL[k] }))}
+        title={t('analytics.periodAll')}
+        options={(Object.keys(periodLabel) as AnalyticsPeriod[]).map((k) => ({ key: k, label: periodLabel[k] }))}
         selectedKey={period}
         onSelect={(k) => setPeriod(k as AnalyticsPeriod)}
         onClose={() => setPeriodOpen(false)}
@@ -328,8 +328,6 @@ export default function AnalyticsScreen() {
     </View>
   );
 }
-
-const thisMonth = (n: number, fmt: (n: number) => string) => `今月 ${fmt(n)}`;
 
 type TileDef = { color: string; bg: string; icon: IconName; label: string; value: string; sub: string };
 
@@ -346,21 +344,17 @@ function BigTile({ icon, color, bg, label, value, sub }: TileDef) {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg },
-  lockWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32, paddingBottom: 80 },
-  lockIcon: { width: 72, height: 72, borderRadius: 20, backgroundColor: colors.primarySoft, alignItems: 'center', justifyContent: 'center', marginBottom: 16 },
-  lockTitle: { fontSize: 18, fontWeight: '700', color: colors.ink1, marginBottom: 8 },
-  lockText: { fontSize: 13, color: colors.ink3, textAlign: 'center', lineHeight: 20 },
+  lockIcon: { width: 56, height: 56, borderRadius: 28, backgroundColor: colors.primarySoft, alignItems: 'center', justifyContent: 'center', marginBottom: 14 },
+  lockTitle: { fontSize: 16, fontWeight: '700', color: colors.ink1, marginBottom: 8 },
+  lockText: { fontSize: 13, color: colors.ink3, textAlign: 'center', lineHeight: 20, marginBottom: 0 },
 
   lockedPreview: { position: 'relative' },
   lockedFade: { opacity: 0.3 },
   lockedOverlay: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24 },
   lockedScrim: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(247,248,250,0.55)' },
   lockedCard: { backgroundColor: colors.surface, borderRadius: 16, paddingVertical: 24, paddingHorizontal: 22, alignItems: 'center', ...shadowCard },
-  periodBtn: {
-    flexDirection: 'row', alignItems: 'center', gap: 6,
-    backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border,
-    borderRadius: 10, paddingVertical: 6, paddingHorizontal: 10,
-  },
+
+  periodBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 10, paddingVertical: 6, paddingHorizontal: 10 },
   periodText: { fontSize: 13, fontWeight: '500', color: colors.ink1 },
 
   tabs: { flexDirection: 'row', marginHorizontal: 16, marginTop: 4, marginBottom: 14, padding: 4, backgroundColor: '#EEF0F4', borderRadius: 12 },

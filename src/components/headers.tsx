@@ -2,6 +2,7 @@ import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from './Icon';
+import { useTranslation } from '@/i18n';
 import { colors } from '@/theme/tokens';
 
 // styles.css .nav-large を移植（大見出しヘッダー）
@@ -24,8 +25,8 @@ export function LargeTitleHeader({
 // styles.css .nav-modal を移植（キャンセル / タイトル / 保存）
 export function ModalHeader({
   title,
-  leftLabel = 'キャンセル',
-  rightLabel = '保存',
+  leftLabel,
+  rightLabel,
   rightBold,
   onLeft,
   onRight,
@@ -37,18 +38,21 @@ export function ModalHeader({
   onLeft?: () => void;
   onRight?: () => void;
 }) {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const left = leftLabel ?? t('common.cancel');
+  const right = rightLabel ?? t('common.save');
   return (
     <View style={[styles.navModal, { paddingTop: Math.max(insets.top, 14) }]}>
       <View style={styles.modalSide}>
         <Pressable onPress={onLeft} hitSlop={8}>
-          <Text style={styles.navLink}>{leftLabel}</Text>
+          <Text style={styles.navLink}>{left}</Text>
         </Pressable>
       </View>
       <Text style={styles.modalTitle} numberOfLines={1}>{title}</Text>
       <View style={[styles.modalSide, styles.modalRight]}>
         <Pressable onPress={onRight} hitSlop={8}>
-          <Text style={[styles.navLink, rightBold && styles.navLinkBold]}>{rightLabel}</Text>
+          <Text style={[styles.navLink, rightBold && styles.navLinkBold]}>{right}</Text>
         </Pressable>
       </View>
     </View>
@@ -65,13 +69,14 @@ export function DetailHeader({
   onBack?: () => void;
   right?: React.ReactNode;
 }) {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   return (
     <View style={[styles.navDetail, { paddingTop: Math.max(insets.top, 14) }]}>
       <View style={styles.modalSide}>
         <Pressable onPress={onBack} hitSlop={8} style={styles.backBtn}>
           <Icon name="chevL" size={20} color={colors.primary} />
-          <Text style={styles.navLink}>戻る</Text>
+          <Text style={styles.navLink}>{t('common.back')}</Text>
         </Pressable>
       </View>
       <Text style={styles.modalTitle} numberOfLines={1}>{title}</Text>

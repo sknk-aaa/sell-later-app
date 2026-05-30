@@ -7,6 +7,7 @@ import { PhotoSlot } from '@/components/PhotoSlot';
 import { PickerSheet } from '@/components/PickerSheet';
 import { AdBanner } from '@/components/AdBanner';
 import { LargeTitleHeader } from '@/components/headers';
+import { useTranslation } from '@/i18n';
 import { useItemStore } from '@/stores/useItemStore';
 import { useItemViewModels, type ItemVM } from '@/stores/selectors';
 import { useCategoryStore } from '@/stores/useCategoryStore';
@@ -20,16 +21,11 @@ type View2 = 'grid' | 'list';
 type SortKey = 'recent' | 'price' | 'profit' | 'status';
 type PickerKind = null | 'sort' | 'category' | 'location' | 'status';
 
-const SORT_LABEL: Record<SortKey, string> = {
-  recent: '登録日が新しい順',
-  price: '見込み売却価格が高い順',
-  profit: '見込み利益が高い順',
-  status: 'ステータス順',
-};
 const STATUS_ORDER: StatusKind[] = ['stored', 'prep', 'listed', 'sold', 'hold'];
 
 export default function ListScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const all = useItemViewModels();
   const categories = useCategoryStore((s) => s.categories);
   const toggleFavorite = useItemStore((s) => s.toggleFavorite);
@@ -42,6 +38,13 @@ export default function ListScreen() {
   const [fLocation, setFLocation] = React.useState('all');
   const [fStatus, setFStatus] = React.useState('all');
   const [picker, setPicker] = React.useState<PickerKind>(null);
+
+  const sortLabel: Record<SortKey, string> = {
+    recent: t('list.sortRecent'),
+    price: t('list.sortPrice'),
+    profit: t('list.sortProfit'),
+    status: t('list.sortStatus'),
+  };
 
   const locations = React.useMemo(
     () => Array.from(new Set(all.map((v) => v.location).filter((l): l is string => !!l))),
@@ -57,14 +60,10 @@ export default function ListScreen() {
     );
     list = [...list].sort((a, b) => {
       switch (sort) {
-        case 'price':
-          return b.expectedPrice - a.expectedPrice;
-        case 'profit':
-          return b.expectedProfit - a.expectedProfit;
-        case 'status':
-          return STATUS_ORDER.indexOf(a.status) - STATUS_ORDER.indexOf(b.status) || b.createdAt.getTime() - a.createdAt.getTime();
-        default:
-          return b.createdAt.getTime() - a.createdAt.getTime();
+        case 'price': return b.expectedPrice - a.expectedPrice;
+        case 'profit': return b.expectedProfit - a.expectedProfit;
+        case 'status': return STATUS_ORDER.indexOf(a.status) - STATUS_ORDER.indexOf(b.status) || b.createdAt.getTime() - a.createdAt.getTime();
+        default: return b.createdAt.getTime() - a.createdAt.getTime();
       }
     });
     return list;
@@ -76,63 +75,59 @@ export default function ListScreen() {
     <View style={styles.screen}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 24 }}>
         <LargeTitleHeader
-          title="一覧"
+          title={t('list.title')}
           right={
             <>
               <Pressable hitSlop={8}><Icon name="search" size={22} color={colors.ink1} /></Pressable>
               <Pressable hitSlop={8} style={styles.filterBtn} onPress={() => setPicker('status')}>
                 <Icon name="sliders" size={20} color={colors.ink1} />
-                <Text style={styles.filterBtnText}>絞り込み</Text>
+                <Text style={styles.filterBtnText}>{t('list.filter')}</Text>
               </Pressable>
               <Pressable hitSlop={8}><Icon name="more" size={22} color={colors.ink3} /></Pressable>
             </>
           }
         />
 
-        {/* View toggle */}
         <View style={styles.toggle}>
-          <ToggleBtn active={view === 'grid'} onPress={() => setView('grid')} icon="grid" label="グリッド" />
-          <ToggleBtn active={view === 'list'} onPress={() => setView('list')} icon="rows" label="リスト" />
+          <ToggleBtn active={view === 'grid'} onPress={() => setView('grid')} icon="grid" label={t('list.grid')} />
+          <ToggleBtn active={view === 'list'} onPress={() => setView('list')} icon="rows" label={t('list.listView')} />
         </View>
 
-        {/* Filter selects */}
         <View style={styles.selects}>
-          <Select label="並び替え" value={SORT_LABEL[sort]} onPress={() => setPicker('sort')} />
-          <Select label="カテゴリ" value={fCategory === 'all' ? 'すべて' : fCategory} onPress={() => setPicker('category')} />
-          <Select label="保管場所" value={fLocation === 'all' ? 'すべて' : fLocation} onPress={() => setPicker('location')} />
-          <Select label="ステータス" value={fStatus === 'all' ? 'すべて' : STATUS[fStatus as StatusKind].label} onPress={() => setPicker('status')} />
+          <Select label={t('list.sortLabel')} value={sortLabel[sort]} onPress={() => setPicker('sort')} />
+          <Select label={t('list.categoryLabel')} value={fCategory === 'all' ? t('common.all') : fCategory} onPress={() => setPicker('category')} />
+          <Select label={t('list.locationLabel')} value={fLocation === 'all' ? t('common.all') : fLocation} onPress={() => setPicker('location')} />
+          <Select label={t('list.statusLabel')} value={fStatus === 'all' ? t('common.all') : t(`status.${fStatus as StatusKind}`)} onPress={() => setPicker('status')} />
         </View>
 
-        {/* Count row */}
         <View style={styles.countRow}>
-          <Text style={styles.countText}>全 {items.length} 件</Text>
-          <Text style={styles.multiSelect}>長押しで複数選択</Text>
+          <Text style={styles.countText}>{t('list.countText', { count: items.length })}</Text>
+          <Text style={styles.multiSelect}>{t('list.multiSelect')}</Text>
         </View>
 
         {items.length === 0 ? (
           <View style={styles.emptyCard}>
             <Text style={styles.emptyText}>
-              {all.length === 0 ? 'まだ商品がありません。\n下の「追加」から登録できます。' : '条件に一致する商品がありません。'}
+              {all.length === 0 ? t('list.emptyAll') : t('list.emptyFilter')}
             </Text>
           </View>
         ) : view === 'grid' ? (
           <View style={styles.grid}>
             {items.map((p) => (
-              <GridCard key={p.id} p={p} onStar={() => toggleFavorite(p.id)} onPress={() => open(p.id)} />
+              <GridCard key={p.id} p={p} onStar={() => toggleFavorite(p.id)} onPress={() => open(p.id)} profit={t('common.profit')} />
             ))}
           </View>
         ) : (
           <View style={styles.listCard}>
             {items.map((p, i) => (
-              <ListRowCard key={p.id} p={p} onStar={() => toggleFavorite(p.id)} onPress={() => open(p.id)} isLast={i === items.length - 1} />
+              <ListRowCard key={p.id} p={p} onStar={() => toggleFavorite(p.id)} onPress={() => open(p.id)} isLast={i === items.length - 1} profit={t('common.profit')} />
             ))}
           </View>
         )}
 
-        {/* Floating add button */}
         <Pressable style={styles.fabWrap} onPress={handleAdd}>
           <View style={styles.fab}><Icon name="plus" size={28} color="#fff" /></View>
-          <Text style={styles.fabLabel}>商品を追加</Text>
+          <Text style={styles.fabLabel}>{t('list.addItem')}</Text>
         </Pressable>
 
         <AdBanner />
@@ -140,32 +135,32 @@ export default function ListScreen() {
 
       <PickerSheet
         visible={picker === 'sort'}
-        title="並び替え"
-        options={(Object.keys(SORT_LABEL) as SortKey[]).map((k) => ({ key: k, label: SORT_LABEL[k] }))}
+        title={t('list.sortTitle')}
+        options={(Object.keys(sortLabel) as SortKey[]).map((k) => ({ key: k, label: sortLabel[k] }))}
         selectedKey={sort}
         onSelect={(k) => setSort(k as SortKey)}
         onClose={() => setPicker(null)}
       />
       <PickerSheet
         visible={picker === 'category'}
-        title="カテゴリで絞り込み"
-        options={[{ key: 'all', label: 'すべて' }, ...categories.map((c) => ({ key: c.name, label: c.name }))]}
+        title={t('list.categoryFilterTitle')}
+        options={[{ key: 'all', label: t('common.all') }, ...categories.map((c) => ({ key: c.name, label: c.name }))]}
         selectedKey={fCategory}
         onSelect={setFCategory}
         onClose={() => setPicker(null)}
       />
       <PickerSheet
         visible={picker === 'location'}
-        title="保管場所で絞り込み"
-        options={[{ key: 'all', label: 'すべて' }, ...locations.map((l) => ({ key: l, label: l }))]}
+        title={t('list.locationFilterTitle')}
+        options={[{ key: 'all', label: t('common.all') }, ...locations.map((l) => ({ key: l, label: l }))]}
         selectedKey={fLocation}
         onSelect={setFLocation}
         onClose={() => setPicker(null)}
       />
       <PickerSheet
         visible={picker === 'status'}
-        title="ステータスで絞り込み"
-        options={[{ key: 'all', label: 'すべて' }, ...STATUS_ORDER.map((k) => ({ key: k, label: STATUS[k].label }))]}
+        title={t('list.filterTitle')}
+        options={[{ key: 'all', label: t('common.all') }, ...STATUS_ORDER.map((k) => ({ key: k, label: t(`status.${k}`) }))]}
         selectedKey={fStatus}
         onSelect={setFStatus}
         onClose={() => setPicker(null)}
@@ -195,7 +190,7 @@ function Select({ label, value, onPress }: { label: string; value: string; onPre
   );
 }
 
-function GridCard({ p, onStar, onPress }: { p: ItemVM; onStar: () => void; onPress: () => void }) {
+function GridCard({ p, onStar, onPress, profit }: { p: ItemVM; onStar: () => void; onPress: () => void; profit: string }) {
   return (
     <Pressable style={styles.gridCard} onPress={onPress}>
       <View>
@@ -213,7 +208,7 @@ function GridCard({ p, onStar, onPress }: { p: ItemVM; onStar: () => void; onPre
         <Text style={styles.gridName} numberOfLines={2}>{p.name}</Text>
         <View style={styles.priceRow}>
           <Text style={styles.gridPrice}>{yen(p.expectedPrice)}</Text>
-          <Text style={styles.profitInline}>利益 <Text style={styles.profitInlineNum}>{yen(p.expectedProfit)}</Text></Text>
+          <Text style={styles.profitInline}>{profit} <Text style={styles.profitInlineNum}>{yen(p.expectedProfit)}</Text></Text>
         </View>
         <View style={styles.metaRow}>
           <View style={styles.metaItem}><Icon name="folder" size={12} color={colors.ink3} /><Text style={styles.metaText} numberOfLines={1}>{p.location || '-'}</Text></View>
@@ -224,7 +219,7 @@ function GridCard({ p, onStar, onPress }: { p: ItemVM; onStar: () => void; onPre
   );
 }
 
-function ListRowCard({ p, onStar, onPress, isLast }: { p: ItemVM; onStar: () => void; onPress: () => void; isLast: boolean }) {
+function ListRowCard({ p, onStar, onPress, isLast, profit }: { p: ItemVM; onStar: () => void; onPress: () => void; isLast: boolean; profit: string }) {
   return (
     <Pressable style={[styles.listRow, !isLast && styles.listRowBorder]} onPress={onPress}>
       {p.imagePath ? (
@@ -242,7 +237,7 @@ function ListRowCard({ p, onStar, onPress, isLast }: { p: ItemVM; onStar: () => 
         <Text style={styles.listName} numberOfLines={1}>{p.name}</Text>
         <View style={[styles.priceRow, { marginTop: 2 }]}>
           <Text style={styles.listPrice}>{yen(p.expectedPrice)}</Text>
-          <Text style={styles.profitInline}>利益 <Text style={styles.profitInlineNum}>{yen(p.expectedProfit)}</Text></Text>
+          <Text style={styles.profitInline}>{profit} <Text style={styles.profitInlineNum}>{yen(p.expectedProfit)}</Text></Text>
         </View>
         <View style={[styles.metaRow, { marginTop: 4 }]}>
           <View style={styles.metaItem}><Icon name="folder" size={12} color={colors.ink3} /><Text style={styles.metaText} numberOfLines={1}>{p.location || '-'}</Text></View>
@@ -280,11 +275,7 @@ const styles = StyleSheet.create({
   gridCard: { width: '47%', flexGrow: 1, backgroundColor: colors.surface, borderRadius: 12, overflow: 'hidden', ...shadowCard },
   gridImage: { width: '100%', aspectRatio: 1, backgroundColor: colors.bg2 },
   gridBadge: { position: 'absolute', top: 8, left: 8 },
-  starBtn: {
-    position: 'absolute', top: 8, right: 8, width: 28, height: 28, borderRadius: 99, backgroundColor: '#fff',
-    alignItems: 'center', justifyContent: 'center',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.12, shadowRadius: 3, elevation: 2,
-  },
+  starBtn: { position: 'absolute', top: 8, right: 8, width: 28, height: 28, borderRadius: 99, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.12, shadowRadius: 3, elevation: 2 },
   gridBody: { paddingHorizontal: 12, paddingTop: 10, paddingBottom: 12 },
   gridName: { fontSize: 13, fontWeight: '500', color: colors.ink1, lineHeight: 18, minHeight: 36 },
   gridPrice: { fontSize: 16, fontWeight: '700', color: colors.ink1, ...numFont },
@@ -305,10 +296,6 @@ const styles = StyleSheet.create({
   listPrice: { fontSize: 15, fontWeight: '700', color: colors.ink1, ...numFont },
 
   fabWrap: { alignItems: 'center', paddingTop: 20, gap: 4 },
-  fab: {
-    width: 56, height: 56, borderRadius: 99, backgroundColor: colors.primary,
-    alignItems: 'center', justifyContent: 'center',
-    shadowColor: colors.primary, shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.4, shadowRadius: 16, elevation: 6,
-  },
+  fab: { width: 56, height: 56, borderRadius: 99, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center', shadowColor: colors.primary, shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.4, shadowRadius: 16, elevation: 6 },
   fabLabel: { fontSize: 12, color: colors.ink3 },
 });

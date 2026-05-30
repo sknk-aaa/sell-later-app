@@ -7,10 +7,10 @@ import { StatusBadge } from '@/components/StatusBadge';
 import { PhotoSlot } from '@/components/PhotoSlot';
 import { Button } from '@/components/ui';
 import { DetailHeader } from '@/components/headers';
+import { useTranslation } from '@/i18n';
 import { useItemStore } from '@/stores/useItemStore';
 import { useItemViewModel } from '@/stores/selectors';
 import { useSettingsStore } from '@/stores/useSettingsStore';
-import { CONDITION_LABEL } from '@/constants/conditions';
 import { STATUS } from '@/theme/status';
 import { colors, numFont, shadowCard } from '@/theme/tokens';
 import { feeAmount, profitRate } from '@/utils/calculations';
@@ -18,6 +18,7 @@ import { formatDate, yen } from '@/utils/format';
 
 export default function DetailScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
   const vm = useItemViewModel(id);
@@ -28,8 +29,8 @@ export default function DetailScreen() {
   if (!vm) {
     return (
       <View style={styles.screen}>
-        <DetailHeader title="商品詳細" onBack={() => router.back()} />
-        <View style={styles.empty}><Text style={styles.emptyText}>商品が見つかりません</Text></View>
+        <DetailHeader title={t('item.title')} onBack={() => router.back()} />
+        <View style={styles.empty}><Text style={styles.emptyText}>{t('item.notFound')}</Text></View>
       </View>
     );
   }
@@ -41,35 +42,28 @@ export default function DetailScreen() {
   const [activePhoto, setActivePhoto] = React.useState(0);
   const photos = vm.imagePaths;
   const active = Math.min(activePhoto, Math.max(0, photos.length - 1));
+  const feeRatePct = Math.round(feeRate * 100);
 
   const onDelete = () => {
-    Alert.alert('商品を削除', `「${vm.name}」を削除しますか？この操作は取り消せません。`, [
-      { text: 'キャンセル', style: 'cancel' },
-      {
-        text: '削除',
-        style: 'destructive',
-        onPress: () => {
-          deleteItem(vm.id);
-          router.back();
-        },
-      },
+    Alert.alert(t('item.deleteTitle'), t('item.deleteMsg', { name: vm.name }), [
+      { text: t('common.cancel'), style: 'cancel' },
+      { text: t('common.delete'), style: 'destructive', onPress: () => { deleteItem(vm.id); router.back(); } },
     ]);
   };
 
   return (
     <View style={styles.screen}>
       <DetailHeader
-        title="商品詳細"
+        title={t('item.title')}
         onBack={() => router.back()}
         right={
           <Pressable hitSlop={8} onPress={() => router.push(`/item/${vm.id}/edit`)}>
-            <Text style={styles.editLink}>編集</Text>
+            <Text style={styles.editLink}>{t('item.edit')}</Text>
           </Pressable>
         }
       />
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}>
-        {/* Photo */}
         <View style={styles.photoBlock}>
           <View style={styles.mainPhotoWrap}>
             {photos.length > 0 ? (
@@ -95,7 +89,6 @@ export default function DetailScreen() {
           )}
         </View>
 
-        {/* Title + meta */}
         <View style={styles.titleBlock}>
           <Text style={styles.title}>{vm.name}</Text>
           <View style={styles.metaRow}>
@@ -103,69 +96,65 @@ export default function DetailScreen() {
             {!!vm.location && (
               <View style={styles.metaItem}><Icon name="folder" size={13} color={colors.ink3} /><Text style={styles.metaText}>{vm.location}</Text></View>
             )}
-            <View style={styles.metaItem}><Icon name="calendar" size={13} color={colors.ink3} /><Text style={styles.metaText}>登録日: {formatDate(vm.createdAt)}</Text></View>
+            <View style={styles.metaItem}><Icon name="calendar" size={13} color={colors.ink3} /><Text style={styles.metaText}>{t('item.registeredAt')}: {formatDate(vm.createdAt)}</Text></View>
           </View>
         </View>
 
-        {/* Price block */}
         <View style={styles.block}>
           <View style={styles.listCard}>
             <View style={styles.priceColRow}>
-              <PriceCol label="見込み売却価格" value={yen(vm.expectedPrice)} />
-              <PriceCol label="見込み利益" value={yen(profit)} profit help />
-              <PriceCol label="利益率" value={`${rate.toFixed(1)}%`} />
+              <PriceCol label={t('item.estSalePrice')} value={yen(vm.expectedPrice)} />
+              <PriceCol label={t('item.estProfit')} value={yen(profit)} profit help />
+              <PriceCol label={t('item.profitRate')} value={`${rate.toFixed(1)}%`} />
             </View>
             <View style={styles.hLine} />
             <View style={[styles.priceColRow, { paddingVertical: 14 }]}>
-              <SmallCol label="購入価格" value={yen(vm.purchasePrice ?? 0)} />
-              <SmallCol label="送料" value={yen(vm.shippingFee)} />
-              <SmallCol label="メルカリ手数料(10%)" value={`-${yen(fee)}`} />
+              <SmallCol label={t('item.purchasePrice')} value={yen(vm.purchasePrice ?? 0)} />
+              <SmallCol label={t('item.shipping')} value={yen(vm.shippingFee)} />
+              <SmallCol label={t('item.fee', { rate: feeRatePct })} value={`-${yen(fee)}`} />
             </View>
           </View>
         </View>
 
-        {/* Detail rows */}
         <View style={styles.block}>
           <View style={styles.listCard}>
-            <DetailListRow icon="tag" label="カテゴリ" value={vm.category} />
-            <DetailListRow icon="star" label="状態" value={CONDITION_LABEL[vm.condition]} />
+            <DetailListRow icon="tag" label={t('item.category')} value={vm.category} />
+            <DetailListRow icon="star" label={t('item.condition')} value={t(`condition.${vm.condition}`)} />
             <DetailListRow
               icon="flag"
-              label="ステータス"
+              label={t('item.status')}
               valueNode={
                 <View style={styles.statusValue}>
                   <View style={[styles.dot, { backgroundColor: STATUS[vm.status].dotColor }]} />
-                  <Text style={styles.rowValue}>{STATUS[vm.status].label}</Text>
+                  <Text style={styles.rowValue}>{t(`status.${vm.status}`)}</Text>
                 </View>
               }
             />
-            <DetailListRow icon="calendar" label="保管場所" value={vm.location || '-'} />
-            <DetailListRow icon="note" label="メモ" multi value={vm.memo || '-'} isLast />
+            <DetailListRow icon="calendar" label={t('item.location')} value={vm.location || '-'} />
+            <DetailListRow icon="note" label={t('item.notes')} multi value={vm.memo || '-'} isLast />
           </View>
         </View>
 
-        {/* Sale record section */}
         <View style={styles.block}>
           <View style={styles.listCard}>
             <View style={styles.saleHead}>
-              <Text style={styles.saleHeadTitle}>売却済みの記録</Text>
+              <Text style={styles.saleHeadTitle}>{t('item.saleRecord')}</Text>
               {!isSold && (
                 <Pressable style={styles.saleBtn} onPress={() => router.push(`/sale?itemId=${vm.id}`)}>
-                  <Text style={styles.saleBtnText}>売却済みにする</Text>
+                  <Text style={styles.saleBtnText}>{t('item.markSold')}</Text>
                 </Pressable>
               )}
             </View>
-            <SaleRow label="実際の売却価格" value={vm.sale ? yen(vm.sale.actualPrice) : '-'} />
-            <SaleRow label="実送料" value={vm.sale ? yen(vm.sale.actualShippingFee) : '-'} />
-            <SaleRow label="実利益" value={vm.sale ? yen(vm.sale.actualProfit) : '-'} profit={!!vm.sale} />
-            <SaleRow label="売却日" value={vm.sale ? formatDate(vm.sale.soldAt) : '-'} isLast />
+            <SaleRow label={t('item.actualPrice')} value={vm.sale ? yen(vm.sale.actualPrice) : '-'} />
+            <SaleRow label={t('item.actualShipping')} value={vm.sale ? yen(vm.sale.actualShippingFee) : '-'} />
+            <SaleRow label={t('item.actualProfit')} value={vm.sale ? yen(vm.sale.actualProfit) : '-'} profit={!!vm.sale} />
+            <SaleRow label={t('item.soldAt')} value={vm.sale ? formatDate(vm.sale.soldAt) : '-'} isLast />
           </View>
         </View>
 
-        {/* Footer actions */}
         <View style={styles.footer}>
-          <Button label="分析を見る" variant="ghost" icon="chartLine" textColor={colors.primary} iconColor={colors.primary} style={{ flex: 1 }} onPress={() => router.push('/analytics')} />
-          <Button label="削除" variant="danger" icon="trash" iconColor="#fff" style={{ flex: 1 }} onPress={onDelete} />
+          <Button label={t('item.viewAnalytics')} variant="ghost" icon="chartLine" textColor={colors.primary} iconColor={colors.primary} style={{ flex: 1 }} onPress={() => router.push('/analytics')} />
+          <Button label={t('item.delete')} variant="danger" icon="trash" iconColor="#fff" style={{ flex: 1 }} onPress={onDelete} />
         </View>
       </ScrollView>
     </View>
@@ -193,11 +182,7 @@ function SmallCol({ label, value }: { label: string; value: string }) {
   );
 }
 
-function DetailListRow({
-  icon, label, value, valueNode, isLast, multi,
-}: {
-  icon: IconName; label: string; value?: string; valueNode?: React.ReactNode; isLast?: boolean; multi?: boolean;
-}) {
+function DetailListRow({ icon, label, value, valueNode, isLast, multi }: { icon: IconName; label: string; value?: string; valueNode?: React.ReactNode; isLast?: boolean; multi?: boolean }) {
   return (
     <View style={[styles.dlRow, multi && styles.dlRowMulti, !isLast && styles.dlRowBorder]}>
       <View style={[styles.dlIcon, multi && { marginTop: 2 }]}><Icon name={icon} size={15} color={colors.primary} /></View>
@@ -231,11 +216,7 @@ const styles = StyleSheet.create({
   thumb: { flex: 1, aspectRatio: 1, borderRadius: 8, overflow: 'hidden' },
   thumbActive: { borderWidth: 2.5, borderColor: colors.primary },
   thumbImg: { width: '100%', height: '100%', backgroundColor: colors.bg2 },
-  starCircle: {
-    position: 'absolute', top: 10, right: 10, width: 30, height: 30, borderRadius: 99, backgroundColor: '#fff',
-    alignItems: 'center', justifyContent: 'center',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.12, shadowRadius: 3, elevation: 2,
-  },
+  starCircle: { position: 'absolute', top: 10, right: 10, width: 30, height: 30, borderRadius: 99, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.12, shadowRadius: 3, elevation: 2 },
 
   titleBlock: { paddingHorizontal: 16, paddingTop: 16 },
   title: { fontSize: 22, fontWeight: '700', letterSpacing: -0.22, color: colors.ink1 },

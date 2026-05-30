@@ -1,11 +1,11 @@
 import React from 'react';
 import { Alert, Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Icon } from './Icon';
+import { useTranslation } from '@/i18n';
 import type { PhotoValue } from '@/stores/useItemStore';
 import { pickImage } from '@/utils/images';
 import { colors } from '@/theme/tokens';
 
-// 写真の選択/削除（無料=1枚、Pro=複数枚）。上限到達かつ無料ならロックスロットで誘導。
 export function ImageField({
   photos,
   onChange,
@@ -19,6 +19,7 @@ export function ImageField({
   isPro: boolean;
   onLocked: () => void;
 }) {
+  const { t } = useTranslation();
   const uriOf = (p: PhotoValue) => (p.kind === 'existing' ? p.path : p.kind === 'new' ? p.uri : null);
 
   const pick = async () => {
@@ -28,20 +29,20 @@ export function ImageField({
 
   const removeAt = (i: number) => onChange(photos.filter((_, idx) => idx !== i));
   const confirmRemove = (i: number) =>
-    Alert.alert('写真を削除', 'この写真を削除しますか？', [
-      { text: 'キャンセル', style: 'cancel' },
-      { text: '削除', style: 'destructive', onPress: () => removeAt(i) },
+    Alert.alert(t('image.deleteTitle'), t('image.deleteMsg'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      { text: t('common.delete'), style: 'destructive', onPress: () => removeAt(i) },
     ]);
 
   const canAdd = photos.length < maxPhotos;
-  const showLocked = !canAdd && !isPro; // 無料で上限(1枚)到達 → Pro誘導
+  const showLocked = !canAdd && !isPro;
 
   return (
     <View style={styles.section}>
       <View style={styles.head}>
-        <Text style={styles.label}>写真</Text>
+        <Text style={styles.label}>{t('image.photos')}</Text>
         <Text style={styles.count}>{photos.length}/{maxPhotos}</Text>
-        <View style={styles.req}><Text style={styles.reqText}>必須</Text></View>
+        <View style={styles.req}><Text style={styles.reqText}>{t('common.required')}</Text></View>
       </View>
 
       <View style={styles.grid}>
@@ -60,18 +61,18 @@ export function ImageField({
         {canAdd && (
           <Pressable style={styles.add} onPress={pick}>
             <View style={styles.addCircle}><Icon name="plus" size={18} color="#fff" /></View>
-            <Text style={styles.addText}>追加</Text>
+            <Text style={styles.addText}>{t('image.add')}</Text>
           </Pressable>
         )}
         {showLocked && (
           <Pressable style={[styles.add, styles.locked]} onPress={onLocked}>
             <Icon name="crown" size={20} color={colors.star} />
-            <Text style={styles.lockedText}>Proで複数枚</Text>
+            <Text style={styles.lockedText}>{t('image.proUnlock')}</Text>
           </Pressable>
         )}
       </View>
       <Text style={styles.hint}>
-        {isPro ? `写真は${maxPhotos}枚まで登録できます` : '無料版では1枚まで。Proで複数枚に対応します'}
+        {isPro ? t('image.hintPro', { max: maxPhotos }) : t('image.hintFree')}
       </Text>
     </View>
   );

@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '@/components/Icon';
 import { ModalHeader } from '@/components/headers';
 import { Button } from '@/components/ui';
+import { useTranslation } from '@/i18n';
 import { useItemStore } from '@/stores/useItemStore';
 import { useItemViewModel } from '@/stores/selectors';
 import { useSettingsStore } from '@/stores/useSettingsStore';
@@ -17,6 +18,7 @@ const toNum = (s: string) => Number(s.replace(/[^0-9]/g, '') || '0');
 
 export default function SaleScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { itemId } = useLocalSearchParams<{ itemId: string }>();
   const vm = useItemViewModel(itemId);
@@ -36,8 +38,8 @@ export default function SaleScreen() {
   if (!vm) {
     return (
       <View style={styles.screen}>
-        <ModalHeader title="売却記録" onLeft={() => router.back()} rightLabel="" />
-        <View style={styles.empty}><Text style={styles.emptyText}>商品が見つかりません</Text></View>
+        <ModalHeader title={t('sale.title')} rightLabel="" onLeft={() => router.back()} />
+        <View style={styles.empty}><Text style={styles.emptyText}>{t('sale.notFound')}</Text></View>
       </View>
     );
   }
@@ -46,6 +48,7 @@ export default function SaleScreen() {
   const shipNum = toNum(shipping);
   const fee = feeAmount(priceNum, feeRate);
   const profit = actualProfit(priceNum, feeRate, shipNum);
+  const feeRatePct = Math.round(feeRate * 100);
 
   const save = () => {
     recordSale(vm.id, { actualPrice: priceNum, actualShipping: shipNum, soldAt }, feeRate);
@@ -54,21 +57,21 @@ export default function SaleScreen() {
 
   return (
     <View style={styles.screen}>
-      <ModalHeader title="売却記録" onLeft={() => router.back()} onRight={save} rightBold />
+      <ModalHeader title={t('sale.title')} onLeft={() => router.back()} onRight={save} rightBold />
       <ScrollView
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 24 }}
       >
-        <Text style={styles.caption}>「{vm.name}」を売却済みとして記録します。</Text>
+        <Text style={styles.caption}>{t('sale.caption', { name: vm.name })}</Text>
 
         <View style={styles.card}>
-          <MoneyField label="実際の売却価格" value={price} onChange={setPrice} />
+          <MoneyField label={t('sale.actualPrice')} value={price} onChange={setPrice} required={t('common.required')} />
           <View style={styles.divider} />
-          <MoneyField label="実送料" value={shipping} onChange={setShipping} />
+          <MoneyField label={t('sale.actualShipping')} value={shipping} onChange={setShipping} required={t('common.required')} />
           <View style={styles.divider} />
           <Pressable style={styles.fieldRow} onPress={() => setShowPicker((v) => !v)}>
-            <Text style={styles.fieldLabel}>売却日</Text>
+            <Text style={styles.fieldLabel}>{t('sale.date')}</Text>
             <View style={styles.dateValueRow}>
               <Text style={styles.dateValue}>{formatDate(soldAt)}</Text>
               <Icon name="calendar" size={16} color={colors.ink4} />
@@ -87,33 +90,32 @@ export default function SaleScreen() {
           )}
         </View>
 
-        {/* 実利益プレビュー */}
         <View style={styles.card}>
           <View style={styles.fieldRow}>
-            <Text style={styles.profitLabel}>メルカリ手数料 (10%)</Text>
+            <Text style={styles.profitLabel}>{t('sale.fee', { rate: feeRatePct })}</Text>
             <Text style={styles.profitMinor}>-{yen(fee)}</Text>
           </View>
           <View style={styles.divider} />
           <View style={styles.fieldRow}>
-            <Text style={styles.profitLabelMain}>実利益</Text>
+            <Text style={styles.profitLabelMain}>{t('sale.actualProfit')}</Text>
             <Text style={styles.profitValue}>{yen(profit)}</Text>
           </View>
         </View>
 
         <View style={{ marginTop: 20 }}>
-          <Button label="売却を記録する" variant="primary" block onPress={save} />
+          <Button label={t('sale.record')} variant="primary" block onPress={save} />
         </View>
       </ScrollView>
     </View>
   );
 }
 
-function MoneyField({ label, value, onChange }: { label: string; value: string; onChange: (t: string) => void }) {
+function MoneyField({ label, value, onChange, required }: { label: string; value: string; onChange: (t: string) => void; required: string }) {
   return (
     <View style={styles.fieldRow}>
       <View style={styles.fieldLabelRow}>
         <Text style={styles.fieldLabel}>{label}</Text>
-        <View style={styles.reqBadge}><Text style={styles.reqText}>必須</Text></View>
+        <View style={styles.reqBadge}><Text style={styles.reqText}>{required}</Text></View>
       </View>
       <View style={styles.moneyInputWrap}>
         <Text style={styles.yenMark}>¥</Text>

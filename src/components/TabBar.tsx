@@ -6,15 +6,15 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon, type IconName } from './Icon';
 import { useSettingsStore } from '@/stores/useSettingsStore';
 import { useItemStore } from '@/stores/useItemStore';
+import { useTranslation } from '@/i18n';
 import { canAddItem } from '@/utils/limits';
 import { colors } from '@/theme/tokens';
 
-// styles.css .tabbar / shared.jsx の TabBar を移植（中央に追加FAB）
-const META: Record<string, { icon: IconName; label: string }> = {
-  home: { icon: 'home', label: 'ホーム' },
-  list: { icon: 'list', label: '一覧' },
-  analytics: { icon: 'chart', label: '分析' },
-  settings: { icon: 'settings', label: '設定' },
+const TAB_ICON: Record<string, IconName> = {
+  home: 'home',
+  list: 'list',
+  analytics: 'chart',
+  settings: 'settings',
 };
 
 const LEFT = ['home', 'list'];
@@ -23,6 +23,7 @@ const RIGHT = ['analytics', 'settings'];
 export function TabBar({ state, navigation }: BottomTabBarProps) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
   const isPro = useSettingsStore((s) => s.isPro);
   const itemCount = useItemStore((s) => s.items.length);
   const onAdd = () => router.push(canAddItem(isPro, itemCount) ? '/add' : '/paywall');
@@ -30,8 +31,8 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
   const currentName = state.routes[state.index]?.name;
 
   const tab = (name: string) => {
-    const meta = META[name];
-    if (!meta) return null;
+    const icon = TAB_ICON[name];
+    if (!icon) return null;
     const active = currentName === name;
     return (
       <Pressable
@@ -46,8 +47,8 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
           if (!event.defaultPrevented) navigation.navigate(name);
         }}
       >
-        <Icon name={meta.icon} size={24} color={active ? colors.primary : colors.ink3} />
-        <Text style={[styles.label, active && styles.labelActive]}>{meta.label}</Text>
+        <Icon name={icon} size={24} color={active ? colors.primary : colors.ink3} />
+        <Text style={[styles.label, active && styles.labelActive]}>{t(`tabs.${name}`)}</Text>
       </Pressable>
     );
   };
@@ -59,7 +60,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
         <View style={styles.fab}>
           <Icon name="plus" size={26} color="#fff" />
         </View>
-        <Text style={[styles.label, styles.addLabel]}>追加</Text>
+        <Text style={[styles.label, styles.addLabel]}>{t('tabs.add')}</Text>
       </Pressable>
       {RIGHT.map(tab)}
     </View>

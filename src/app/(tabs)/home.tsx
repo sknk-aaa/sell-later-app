@@ -8,28 +8,30 @@ import { Card, SectionHead } from '@/components/ui';
 import { Donut } from '@/components/charts/Donut';
 import { AdBanner } from '@/components/AdBanner';
 import { LargeTitleHeader } from '@/components/headers';
+import { useTranslation } from '@/i18n';
 import { useHomeSummary } from '@/stores/selectors';
 import { colors, numFont, shadowCard, type StatusKind } from '@/theme/tokens';
 import { yen } from '@/utils/format';
 
-const STATUS_META: { kind: StatusKind; label: string; icon: IconName; color: string }[] = [
-  { kind: 'stored', label: '保管中', icon: 'archive', color: '#9CA3AF' },
-  { kind: 'prep', label: '出品準備中', icon: 'clock', color: colors.statusPrep },
-  { kind: 'listed', label: '出品中', icon: 'tag', color: colors.statusListed },
-  { kind: 'sold', label: '売却済み', icon: 'checkCircle', color: colors.statusSold },
-  { kind: 'hold', label: '保留', icon: 'pause', color: colors.statusHold },
+const STATUS_ICONS: { kind: StatusKind; icon: IconName; color: string }[] = [
+  { kind: 'stored', icon: 'archive', color: '#9CA3AF' },
+  { kind: 'prep', icon: 'clock', color: colors.statusPrep },
+  { kind: 'listed', icon: 'tag', color: colors.statusListed },
+  { kind: 'sold', icon: 'checkCircle', color: colors.statusSold },
+  { kind: 'hold', icon: 'pause', color: colors.statusHold },
 ];
 
 export default function HomeScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const summary = useHomeSummary();
-  const maxStatus = Math.max(1, ...STATUS_META.map((s) => summary.statusCounts[s.kind]));
+  const maxStatus = Math.max(1, ...STATUS_ICONS.map((s) => summary.statusCounts[s.kind]));
 
   return (
     <View style={styles.screen}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 24 }}>
         <LargeTitleHeader
-          title="ホーム"
+          title={t('tabs.home')}
           right={
             <Pressable hitSlop={8}>
               <Icon name="more" size={22} color={colors.ink3} />
@@ -37,40 +39,40 @@ export default function HomeScreen() {
           }
         />
 
-        {/* 資産サマリーカード */}
+        {/* Asset summary card */}
         <Card style={{ paddingBottom: 20 }}>
           <View style={styles.summaryHead}>
-            <Text style={styles.summaryTitle}>資産サマリー</Text>
-            <Text style={styles.summarySub}>すべて売却した場合の想定</Text>
+            <Text style={styles.summaryTitle}>{t('home.summary')}</Text>
+            <Text style={styles.summarySub}>{t('home.summarySubtitle')}</Text>
           </View>
           <View style={styles.row16}>
-            <SummaryStat icon="tag" iconBg={colors.primarySoft} iconColor={colors.primary} label="想定売上合計" value={yen(summary.expectedSalesTotal)} />
-            <SummaryStat icon="chartLine" iconBg="rgba(16,185,129,0.12)" iconColor={colors.profit} label="想定利益合計" value={yen(summary.expectedProfitTotal)} profit />
+            <SummaryStat icon="tag" iconBg={colors.primarySoft} iconColor={colors.primary} label={t('home.totalSales')} value={yen(summary.expectedSalesTotal)} />
+            <SummaryStat icon="chartLine" iconBg="rgba(16,185,129,0.12)" iconColor={colors.profit} label={t('home.totalProfit')} value={yen(summary.expectedProfitTotal)} profit />
           </View>
           <View style={styles.summaryDivider} />
           <SummaryStat
             icon="checkCircle"
             iconBg={colors.statusSoldBg}
             iconColor={colors.profit}
-            label="売却済み利益"
+            label={t('home.soldProfit')}
             value={yen(summary.soldProfitTotal)}
             profit
           />
         </Card>
 
-        {/* ステータス別 */}
-        <SectionHead title="ステータス別" onSeeAll={() => router.push('/list')} />
+        {/* By status */}
+        <SectionHead title={t('home.byStatus')} onSeeAll={() => router.push('/list')} />
         <Card style={{ paddingHorizontal: 12, paddingVertical: 18 }}>
           <View style={styles.statusRow}>
-            {STATUS_META.map((s) => {
+            {STATUS_ICONS.map((s) => {
               const count = summary.statusCounts[s.kind];
               return (
                 <View key={s.kind} style={styles.statusCol}>
                   <Icon name={s.icon} size={22} color={s.color} />
-                  <Text style={styles.statusLabel}>{s.label}</Text>
+                  <Text style={styles.statusLabel}>{t(`status.${s.kind}`)}</Text>
                   <Text style={styles.statusCount}>
                     {count}
-                    <Text style={styles.statusCountUnit}>件</Text>
+                    <Text style={styles.statusCountUnit}>{t('home.items')}</Text>
                   </Text>
                   <View style={styles.statusTrack}>
                     <View style={[styles.statusFill, { width: `${(count / maxStatus) * 100}%`, backgroundColor: s.color }]} />
@@ -81,14 +83,14 @@ export default function HomeScreen() {
           </View>
         </Card>
 
-        {/* カテゴリ別 想定売上 */}
-        <SectionHead title="カテゴリ別 想定売上" onSeeAll={() => router.push('/analytics')} />
+        {/* Category breakdown */}
+        <SectionHead title={t('home.byCat')} onSeeAll={() => router.push('/analytics')} />
         <Card>
           {summary.categoryBreakdown.length === 0 ? (
-            <Text style={styles.emptyInline}>データがありません</Text>
+            <Text style={styles.emptyInline}>{t('common.noData')}</Text>
           ) : (
             <View style={styles.donutRow}>
-              <Donut data={summary.categoryBreakdown} size={150} thickness={26} centerLabel="合計" centerValue={yen(summary.expectedSalesTotal)} />
+              <Donut data={summary.categoryBreakdown} size={150} thickness={26} centerLabel={t('common.total')} centerValue={yen(summary.expectedSalesTotal)} />
               <View style={styles.legend}>
                 {summary.categoryBreakdown.map((c) => (
                   <View key={c.name} style={styles.legendRow}>
@@ -103,11 +105,11 @@ export default function HomeScreen() {
           )}
         </Card>
 
-        {/* 最近追加した商品 */}
-        <SectionHead title="最近追加した商品" onSeeAll={() => router.push('/list')} />
+        {/* Recently added */}
+        <SectionHead title={t('home.recentItems')} onSeeAll={() => router.push('/list')} />
         {summary.recent.length === 0 ? (
           <View style={styles.emptyCard}>
-            <Text style={styles.emptyText}>まだ商品がありません。「追加」から登録できます。</Text>
+            <Text style={styles.emptyText}>{t('home.noItems')}</Text>
           </View>
         ) : (
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.recentRow}>
