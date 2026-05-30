@@ -143,7 +143,14 @@ platform :ios do
       code_sign_identity: "Apple Distribution",
       profile_name: profile_name
     )
+    # ビルド番号を自動採番（重複回避）。Expo生成のInfo.plistはCFBundleVersionが
+    # 固定値なので xcargs(CURRENT_PROJECT_VERSION) は効かない → Info.plistを直接書換
     build_no = ENV["GITHUB_RUN_NUMBER"] || Time.now.to_i.to_s
+    set_info_plist_value(
+      path: File.join(root, "ios", scheme, "Info.plist"),
+      key: "CFBundleVersion",
+      value: build_no
+    )
     gym(
       workspace: workspace,
       scheme: scheme,
@@ -151,7 +158,6 @@ platform :ios do
       export_method: "app-store",
       output_directory: "build",
       output_name: "app.ipa",
-      xcargs: "CURRENT_PROJECT_VERSION=#{build_no}",  # ビルド番号を自動採番（重複回避）
       export_options: {
         method: "app-store",
         signingStyle: "manual",
@@ -307,7 +313,7 @@ jobs:
 | gym archive `Signing requires a development team` | prebuild生成projが自動署名・チーム空 | `update_code_signing_settings` で手動署名化＋gym `export_options` manual |
 | ネイティブは進むが**codesignで無限ハング**（タイムアウト） | login.keychain の署名UIダイアログ待ち | Fastfile `before_all { setup_ci if ENV["CI"] }`（一時キーチェーン） |
 | アップロードで `Validation failed (409) SDK version issue` | Appleが iOS 26 SDK / Xcode 26 必須化、ランナーが旧Xcode | `runs-on: macos-26` ＋「最新Xcode選択」step |
-| 2回目以降アップロードがビルド番号重複で失敗 | CFBundleVersionが毎回同じ | gym `xcargs: CURRENT_PROJECT_VERSION=$GITHUB_RUN_NUMBER` |
+| 2回目以降アップロードが `bundle version '1' already used` (409) | Expo生成Info.plistのCFBundleVersionが固定値で `xcargs(CURRENT_PROJECT_VERSION)` が効かない | gym前に `set_info_plist_value` で `ios/<scheme>/Info.plist` の `CFBundleVersion` を `$GITHUB_RUN_NUMBER` に直接書換 |
 
 ---
 

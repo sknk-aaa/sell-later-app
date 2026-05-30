@@ -92,7 +92,7 @@ types/sql.d.ts             .sql inline-import 用の型宣言
 5. **gym archive 失敗 `Signing requires a development team`** … prebuild生成プロジェクトが自動署名・チーム空のため → `update_code_signing_settings`（自動署名OFF・APPLE_TEAM_ID・matchプロファイル）＋ gym `export_options`(signingStyle manual) で手動署名化。
 6. **codesign ハング（40分超でタイムアウト）** … login.keychain の署名UIダイアログ待ち → Fastfile `before_all { setup_ci if ENV["CI"] }`（一時キーチェーン）で解消。
 7. **アップロードで `Validation failed (409) SDK version issue`** … Apple が iOS 26 SDK / Xcode 26 必須化 → ランナーを `runs-on: macos-26` ＋「最新Xcode選択step」に変更。
-8. **ビルド番号重複対策** … gym `xcargs: CURRENT_PROJECT_VERSION=$GITHUB_RUN_NUMBER` で毎回自動採番。
+8. **ビルド番号重複対策** … Expo生成のInfo.plistは `CFBundleVersion` が固定値で `xcargs(CURRENT_PROJECT_VERSION)` が効かない（アップロードで `bundle version '1' already used` 409）。→ gym前に `set_info_plist_value` で `ios/<scheme>/Info.plist` の `CFBundleVersion` を `$GITHUB_RUN_NUMBER` に直接書換。
 
 ### 残タスク
 - **実機での最終動作確認（TestFlight）**: 購入（RevenueCatサンドボックス＝ASCのSandboxテスターでサインイン）・広告バナー（無料時／現状テスト広告）・Pro制限（21件超・写真2枚目ロック・分析ロック）・複数写真。
