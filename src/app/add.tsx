@@ -42,7 +42,14 @@ export default function AddScreen() {
 
   return (
     <View style={styles.screen}>
-      <ModalHeader title={t('add.title')} onLeft={() => router.back()} onRight={() => save(false)} />
+      <ModalHeader
+        title={t('add.title')}
+        onLeft={() => {
+          if (isOnboarding) { completeOnboarding(); router.replace('/home'); }
+          else router.back();
+        }}
+        onRight={() => save(false)}
+      />
       {isOnboarding && (
         <View style={styles.hint}>
           <Text style={styles.hintText}>✦ {t('onboarding.hint')}</Text>
