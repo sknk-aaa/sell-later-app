@@ -1,5 +1,6 @@
 import React from 'react';
 import { Alert, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import * as StoreReview from 'expo-store-review';
 import { useRouter } from 'expo-router';
 import { CONTACT_EMAIL } from '@/constants/docs';
 import { Icon, type IconName } from '@/components/Icon';
@@ -11,16 +12,12 @@ import { useItemStore } from '@/stores/useItemStore';
 import { useTranslation } from '@/i18n';
 import { CURRENCY_CODES } from '@/utils/money';
 import { PLATFORMS, PLATFORM_BY_ID, type PlatformId } from '@/constants/platforms';
-import { colors, type StatusKind } from '@/theme/tokens';
+import { colors } from '@/theme/tokens';
 import type { Setting } from '@/db/schema';
-
-const STATUS_ORDER: StatusKind[] = ['stored', 'prep', 'listed', 'sold', 'hold'];
 
 export default function SettingsScreen() {
   const router = useRouter();
   const { t } = useTranslation();
-  const theme = useSettingsStore((s) => s.theme);
-  const setTheme = useSettingsStore((s) => s.setTheme);
   const language = useSettingsStore((s) => s.language);
   const setLanguage = useSettingsStore((s) => s.setLanguage);
   const currency = useSettingsStore((s) => s.currency);
@@ -29,18 +26,12 @@ export default function SettingsScreen() {
   const setDefaultPlatform = useSettingsStore((s) => s.setDefaultPlatform);
   const isPro = useSettingsStore((s) => s.isPro);
   const clearAllData = useItemStore((s) => s.clearAllData);
-  const [themeOpen, setThemeOpen] = React.useState(false);
   const [langOpen, setLangOpen] = React.useState(false);
   const [currencyOpen, setCurrencyOpen] = React.useState(false);
   const [platformOpen, setPlatformOpen] = React.useState(false);
 
   const currencyLabel = (c: Setting['currency']) => (c === 'auto' ? t('settings.currencyAuto') : c);
 
-  const themeLabel: Record<Setting['theme'], string> = {
-    system: t('settings.themeSystem'),
-    light: t('settings.themeLight'),
-    dark: t('settings.themeDark'),
-  };
   const langLabel: Record<Setting['language'], string> = {
     system: t('language.system'),
     en: t('language.en'),
@@ -54,18 +45,17 @@ export default function SettingsScreen() {
     ]);
   };
 
-  const showStatuses = () => {
-    Alert.alert(
-      t('settings.statusFixedTitle'),
-      STATUS_ORDER.map((k) => `・${t(`status.${k}`)}`).join('\n') + '\n\n' + t('settings.statusFixedNote'),
-    );
-  };
-
   const contact = () => {
     const url = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(t('common.appName'))}`;
     Linking.openURL(url).catch(() =>
       Alert.alert(t('settings.contact'), `${t('settings.contactFailMsg')}\n${CONTACT_EMAIL}`),
     );
+  };
+
+  const review = async () => {
+    if (await StoreReview.hasAction()) {
+      await StoreReview.requestReview();
+    }
   };
 
   return (
@@ -89,19 +79,12 @@ export default function SettingsScreen() {
           )}
         </Card>
 
-        <SectionTitle>{t('settings.sectionData')}</SectionTitle>
-        <ListCard>
-          <Row icon="trash" iconBg="rgba(255,107,107,0.12)" iconColor={colors.danger} label={t('settings.deleteData')} labelColor={colors.danger} onPress={confirmClear} isLast />
-        </ListCard>
-
         <SectionTitle>{t('settings.sectionDisplay')}</SectionTitle>
         <ListCard>
-          <Row icon="palette" label={t('settings.theme')} value={themeLabel[theme]} onPress={() => setThemeOpen(true)} />
           <Row icon="doc" label={t('language.title')} value={langLabel[language]} onPress={() => setLangOpen(true)} />
           <Row icon="tag" label={t('settings.currency')} value={currencyLabel(currency)} onPress={() => setCurrencyOpen(true)} />
           <Row icon="bag" label={t('platform.defaultTitle')} value={t(PLATFORM_BY_ID[defaultPlatform].labelKey)} onPress={() => setPlatformOpen(true)} />
           <Row icon="percent" label={t('settings.profitMethod')} value={t('settings.profitMethodValue')} onPress={() => router.push('/settings/info/profit')} />
-          <Row icon="sliders" label={t('settings.statusEdit')} value={t('settings.statusFixed')} onPress={showStatuses} />
           <Row icon="folder" label={t('settings.categoryEdit')} onPress={() => router.push('/settings/categories')} isLast />
         </ListCard>
 
@@ -109,22 +92,24 @@ export default function SettingsScreen() {
         <ListCard>
           <Row icon="help" label={t('settings.faq')} onPress={() => router.push('/settings/info/faq')} />
           <Row icon="mail" label={t('settings.contact')} onPress={contact} />
+          <Row icon="star" label={t('settings.review')} onPress={review} />
           <Row icon="doc" label={t('settings.terms')} onPress={() => router.push('/settings/info/terms')} />
-          <Row icon="shield" label={t('settings.privacy')} onPress={() => router.push('/settings/info/privacy')} />
+          <Row icon="shield" label={t('settings.privacy')} onPress={() => router.push('/settings/info/privacy')} isLast />
+        </ListCard>
+
+        <SectionTitle>{t('settings.sectionData')}</SectionTitle>
+        <ListCard>
+          <Row icon="trash" iconBg="rgba(255,107,107,0.12)" iconColor={colors.danger} label={t('settings.deleteData')} labelColor={colors.danger} onPress={confirmClear} isLast />
+        </ListCard>
+
+        <SectionTitle>{t('settings.sectionOther')}</SectionTitle>
+        <ListCard>
           <Row icon="info" label={t('settings.about')} value={t('settings.version')} onPress={() => Alert.alert(t('common.appName'), t('settings.version'))} isLast />
         </ListCard>
 
         <View style={{ height: 24 }} />
       </ScrollView>
 
-      <PickerSheet
-        visible={themeOpen}
-        title={t('settings.theme')}
-        options={(['system', 'light', 'dark'] as Setting['theme'][]).map((k) => ({ key: k, label: themeLabel[k] }))}
-        selectedKey={theme}
-        onSelect={(k) => setTheme(k as Setting['theme'])}
-        onClose={() => setThemeOpen(false)}
-      />
       <PickerSheet
         visible={langOpen}
         title={t('language.title')}
