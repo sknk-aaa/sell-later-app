@@ -30,7 +30,7 @@ const STATUS_DONUT_COLOR: Record<StatusKind, string> = {
 export default function AnalyticsScreen() {
   const router = useRouter();
   const { t } = useTranslation();
-  const { fmt } = useCurrency();
+  const { fmt, symbol } = useCurrency();
   const isPro = useSettingsStore((s) => s.isPro);
   const [tab, setTab] = React.useState<Tab>('summary');
   const [period, setPeriod] = React.useState<AnalyticsPeriod>('all');
@@ -224,6 +224,7 @@ export default function AnalyticsScreen() {
                   data={a.monthlyProfit}
                   w={chartW}
                   h={200}
+                  symbol={symbol}
                   highlightIdx={11}
                   highlightLabel={t('analytics.periodMonth')}
                   highlightValue={fmt(a.monthlyProfit[11].value)}

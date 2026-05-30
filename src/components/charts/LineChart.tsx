@@ -21,11 +21,25 @@ function niceMax(v: number): number {
   return m * pow;
 }
 
+// Y軸ラベルを短縮表記に（1,000,000→1M / 84,000→84k）。桁あふれによる見切れを防ぐ
+function compact(v: number): string {
+  if (v >= 1_000_000) {
+    const n = v / 1_000_000;
+    return `${n % 1 === 0 ? n : n.toFixed(1)}M`;
+  }
+  if (v >= 1_000) {
+    const n = v / 1_000;
+    return `${n % 1 === 0 ? n : n.toFixed(1)}k`;
+  }
+  return String(v);
+}
+
 // charts.jsx の LineChart（月別 売却済み利益）を移植
 export function LineChart({
   data,
   w = 360,
   h = 200,
+  symbol = '¥',
   highlightIdx,
   highlightLabel,
   highlightValue,
@@ -33,11 +47,12 @@ export function LineChart({
   data: { label: string; value: number }[];
   w?: number;
   h?: number;
+  symbol?: string;
   highlightIdx?: number;
   highlightLabel?: string;
   highlightValue?: string;
 }) {
-  const pad = { l: 48, r: 12, t: 16, b: 28 };
+  const pad = { l: 44, r: 14, t: 22, b: 28 };
   const innerW = w - pad.l - pad.r;
   const innerH = h - pad.t - pad.b;
   const max = niceMax(Math.max(0, ...data.map((d) => d.value)));
@@ -52,16 +67,18 @@ export function LineChart({
     if (highlightIdx == null) return null;
     const tx = xs[highlightIdx];
     const ty = ys[highlightIdx];
-    const bw = 76;
+    const bw = 84;
     const bh = 40;
+    // 吹き出しがSVG左右にはみ出さないよう中心xをクランプ（ポインタは点に残す）
+    const cx = Math.min(Math.max(tx, bw / 2 + 2), w - bw / 2 - 2);
     return (
       <G>
-        <Rect x={tx - bw / 2} y={ty - bh - 12} width={bw} height={bh} rx={8} fill="#10B981" />
+        <Rect x={cx - bw / 2} y={ty - bh - 12} width={bw} height={bh} rx={8} fill="#10B981" />
         <Polygon points={`${tx - 5},${ty - 12} ${tx + 5},${ty - 12} ${tx},${ty - 6}`} fill="#10B981" />
-        <SvgText x={tx} y={ty - bh + 4} textAnchor="middle" fontSize={11} fill="rgba(255,255,255,0.85)">
+        <SvgText x={cx} y={ty - bh + 4} textAnchor="middle" fontSize={11} fill="rgba(255,255,255,0.85)">
           {highlightLabel ?? ''}
         </SvgText>
-        <SvgText x={tx} y={ty - bh + 22} textAnchor="middle" fontSize={14} fill="#fff" fontWeight="700">
+        <SvgText x={cx} y={ty - bh + 22} textAnchor="middle" fontSize={14} fill="#fff" fontWeight="700">
           {highlightValue ?? ''}
         </SvgText>
       </G>
@@ -82,7 +99,7 @@ export function LineChart({
           <G key={t}>
             <Line x1={pad.l} x2={w - pad.r} y1={y} y2={y} stroke="#EEF0F4" strokeWidth={1} />
             <SvgText x={pad.l - 6} y={y + 3} fontSize={10} fill="#8A8F98" textAnchor="end">
-              {`¥${t.toLocaleString()}`}
+              {`${symbol}${compact(t)}`}
             </SvgText>
           </G>
         );
