@@ -1,5 +1,5 @@
 import React from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '@/components/Icon';
@@ -8,6 +8,7 @@ import { Button } from '@/components/ui';
 import { useTranslation } from '@/i18n';
 import { usePurchases } from '@/purchases/PurchaseProvider';
 import { useSettingsStore } from '@/stores/useSettingsStore';
+import { PRIVACY_URL, TERMS_URL } from '@/constants/docs';
 import { colors } from '@/theme/tokens';
 
 export default function PaywallScreen() {
@@ -71,12 +72,14 @@ export default function PaywallScreen() {
           </View>
         )}
 
+        <Text style={styles.subInfo}>{t('paywall.subInfo')}</Text>
+
         <View style={styles.links}>
-          <Pressable onPress={() => Alert.alert(t('paywall.terms'), '')}>
+          <Pressable onPress={() => Linking.openURL(TERMS_URL)}>
             <Text style={styles.link}>{t('paywall.terms')}</Text>
           </Pressable>
           <Text style={styles.linkSep}>·</Text>
-          <Pressable onPress={() => Alert.alert(t('paywall.privacy'), '')}>
+          <Pressable onPress={() => Linking.openURL(PRIVACY_URL)}>
             <Text style={styles.link}>{t('paywall.privacy')}</Text>
           </Pressable>
         </View>
@@ -105,7 +108,8 @@ const styles = StyleSheet.create({
   restore: { alignItems: 'center', paddingVertical: 8 },
   restoreText: { fontSize: 14, color: colors.ink3 },
 
-  links: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 6, marginTop: 20 },
+  subInfo: { marginTop: 24, fontSize: 11, color: colors.ink4, lineHeight: 16, textAlign: 'center' },
+  links: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 6, marginTop: 14 },
   link: { fontSize: 12, color: colors.ink3, textDecorationLine: 'underline' },
   linkSep: { fontSize: 12, color: colors.ink3 },
 });

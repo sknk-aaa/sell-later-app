@@ -243,6 +243,7 @@ export const en = {
     restore: 'Restore purchase',
     terms: 'Terms of Service',
     privacy: 'Privacy Policy',
+    subInfo: 'Subscriptions renew automatically unless canceled at least 24 hours before the end of the current period. Manage or cancel anytime in your App Store account settings. The lifetime plan is a one-time purchase.',
   },
   onboarding: {
     skip: 'Skip',

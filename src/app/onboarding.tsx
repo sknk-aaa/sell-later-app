@@ -1,10 +1,10 @@
 import React from 'react';
 import {
-  Dimensions,
   FlatList,
   Pressable,
   StyleSheet,
   Text,
+  useWindowDimensions,
   View,
   type ListRenderItemInfo,
 } from 'react-native';
@@ -14,8 +14,6 @@ import Svg, { Circle, Ellipse, Line, Path, Rect } from 'react-native-svg';
 import { useTranslation } from '@/i18n';
 import { useSettingsStore } from '@/stores/useSettingsStore';
 import { colors } from '@/theme/tokens';
-
-const { width: W } = Dimensions.get('window');
 
 type Slide = { key: string; illustration: React.ReactNode; title: string; sub: string };
 
@@ -109,6 +107,7 @@ function IllustrationTrack() {
 export default function OnboardingScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { width: W } = useWindowDimensions();
   const { t } = useTranslation();
   const completeOnboarding = useSettingsStore((s) => s.completeOnboarding);
   const flatRef = React.useRef<FlatList>(null);
@@ -185,7 +184,7 @@ export default function OnboardingScreen() {
 
       {/* CTA */}
       <Pressable
-        style={({ pressed }) => [styles.ctaBtn, pressed && styles.ctaBtnPressed]}
+        style={({ pressed }) => [styles.ctaBtn, { width: W - 48 }, pressed && styles.ctaBtnPressed]}
         onPress={isLast ? finish : () => flatRef.current?.scrollToIndex({ index: activeIndex + 1, animated: true })}
       >
         <Text style={styles.ctaText}>
@@ -211,7 +210,7 @@ const styles = StyleSheet.create({
   dot: { width: 7, height: 7, borderRadius: 99, backgroundColor: colors.divider },
   dotActive: { width: 22, backgroundColor: colors.primary },
 
-  ctaBtn: { marginHorizontal: 24, width: W - 48, backgroundColor: colors.primary, borderRadius: 14, paddingVertical: 16, alignItems: 'center' },
+  ctaBtn: { marginHorizontal: 24, maxWidth: 520, alignSelf: 'center', backgroundColor: colors.primary, borderRadius: 14, paddingVertical: 16, alignItems: 'center' },
   ctaBtnPressed: { opacity: 0.85 },
   ctaText: { color: '#fff', fontSize: 17, fontWeight: '700' },
 });

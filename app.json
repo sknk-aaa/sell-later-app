@@ -29,7 +29,7 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "商品の写真を登録するために写真ライブラリへのアクセスを許可してください。"
+          "photosPermission": "Allow access to your photo library to add photos of your items."
         }
       ],
       "@react-native-community/datetimepicker",

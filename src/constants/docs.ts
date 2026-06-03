@@ -1,6 +1,8 @@
 import type { AppLocale } from '@/i18n';
 
 export const CONTACT_EMAIL = '625.somq2525@gmail.com';
+export const PRIVACY_URL = 'https://sknk-aaa.github.io/sell-later-app/privacy-policy.html';
+export const TERMS_URL = 'https://sknk-aaa.github.io/sell-later-app/terms.html';
 const UPDATED_JA = '2026年5月31日';
 const UPDATED_EN = 'May 31, 2026';
 

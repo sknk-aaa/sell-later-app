@@ -245,6 +245,7 @@ export const ja: Translation = {
     restore: '購入を復元',
     terms: '利用規約',
     privacy: 'プライバシーポリシー',
+    subInfo: 'サブスクは、期間終了の24時間以上前に解約しない限り自動更新されます。解約・管理はApp Storeアカウント設定からいつでも可能です。買い切りプランは一度のお支払いです。',
   },
   onboarding: {
     skip: 'スキップ',

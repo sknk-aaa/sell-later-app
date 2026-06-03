@@ -1,3 +1,4 @@
 {
-  "CFBundleDisplayName": "うるカタ"
+  "CFBundleDisplayName": "うるカタ",
+  "NSPhotoLibraryUsageDescription": "商品の写真を登録するために写真ライブラリへのアクセスを許可してください。"
 }
