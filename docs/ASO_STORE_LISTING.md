@@ -54,7 +54,12 @@ PERFECT FOR
 Stop guessing. See what your stuff is worth — and watch the total grow every time you sell.
 
 Pro unlocks unlimited items, multiple photos per item, full analytics, and removes ads.
+
+Terms of Use (EULA): https://sknk-aaa.github.io/sell-later-app/terms.html
+Privacy Policy: https://sknk-aaa.github.io/sell-later-app/privacy-policy.html
 ```
+
+> **必須（Guideline 3.1.2c）**: 上記の利用規約(EULA)・プライバシーリンク2行は、サブスク提供アプリでは説明文に**必ず含める**。外すと再リジェクト。
 
 ---
 
@@ -105,6 +110,9 @@ Pro unlocks unlimited items, multiple photos per item, full analytics, and remov
 「全部売ったらいくら」を見える化して、売るたびに増える合計額を楽しもう。
 
 Proにアップグレードすると、商品数無制限・写真複数枚・全分析機能の解放・広告非表示になります。
+
+利用規約（EULA）: https://sknk-aaa.github.io/sell-later-app/terms.html
+プライバシーポリシー: https://sknk-aaa.github.io/sell-later-app/privacy-policy.html
 ```
 
 ---
