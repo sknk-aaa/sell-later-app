@@ -14,8 +14,9 @@
 
 ## 課金（IAP）— RevenueCat経由
 製品は App Store Connect で作成済み:
-- 非消費型（買い切り）: `com.selllater.app.pro.lifetime` / ¥1,500
-- 自動更新サブスク: `com.selllater.app.pro.monthly` / ¥500/月（サブスクグループ内）
+- 非消費型（買い切り）: `com.selllater.app.pro.lifetime2` / ¥1,500
+- 自動更新サブスク: `com.selllater.app.pro.monthly2` / ¥500/月（サブスクグループ内）
+  - ※旧ID(`...lifetime`/`...monthly`)は「審査待ち」でスタックし紐付け不可になったため作り直し（製品IDは再利用不可）。詳細は HANDOFF 参照。
 
 RevenueCat 設定（完了済み）:
 - プロジェクト `selllater`、iOSアプリ（bundle id `com.selllater.app`）追加

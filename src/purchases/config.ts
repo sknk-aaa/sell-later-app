@@ -6,5 +6,5 @@ export const REVENUECAT_IOS_API_KEY =
 export const ENTITLEMENT_PRO = 'pro';
 
 // 参考: App Store Connect で作成する製品ID（RevenueCatのProductに紐付ける）
-export const SKU_LIFETIME = 'com.selllater.app.pro.lifetime'; // 買い切り ¥1,500
-export const SKU_MONTHLY = 'com.selllater.app.pro.monthly'; // 月額 ¥500
+export const SKU_LIFETIME = 'com.selllater.app.pro.lifetime2'; // 買い切り ¥1,500
+export const SKU_MONTHLY = 'com.selllater.app.pro.monthly2'; // 月額 ¥500
