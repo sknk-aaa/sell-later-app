@@ -244,6 +244,11 @@ export const en = {
     terms: 'Terms of Service',
     privacy: 'Privacy Policy',
     subInfo: 'Subscriptions renew automatically unless canceled at least 24 hours before the end of the current period. Manage or cancel anytime in your App Store account settings. The lifetime plan is a one-time purchase.',
+    perMonth: '/ month',
+    monthlyName: 'Monthly',
+    lifetimeName: 'Lifetime',
+    monthlyDesc: '1-month auto-renewing subscription. Unlocks all Pro features (ad-free, multiple photos, full analytics, unlimited items) for one month, then renews monthly.',
+    lifetimeDesc: 'One-time purchase. Unlocks all Pro features permanently. No recurring charge.',
   },
   onboarding: {
     skip: 'Skip',

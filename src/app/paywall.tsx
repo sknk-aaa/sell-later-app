@@ -55,17 +55,27 @@ export default function PaywallScreen() {
         ) : packages.length === 0 ? (
           <Text style={styles.notice}>{t('paywall.loading')}</Text>
         ) : (
-          <View style={{ marginTop: 20, gap: 10 }}>
-            {packages.map((p, i) => (
-              <Button
-                key={p.id}
-                label={`${p.title} ${p.priceString}`}
-                variant={i === 0 ? 'primary' : 'outline'}
-                block
-                textColor={i === 0 ? undefined : colors.primary}
-                onPress={() => buy(p.pkg)}
-              />
-            ))}
+          <View style={{ marginTop: 20, gap: 12 }}>
+            {packages.map((p) => {
+              const isMonthly = p.packageType === 'MONTHLY';
+              const planName = isMonthly ? t('paywall.monthlyName') : t('paywall.lifetimeName');
+              const planDesc = isMonthly ? t('paywall.monthlyDesc') : t('paywall.lifetimeDesc');
+              return (
+                <Pressable key={p.id} style={styles.planCard} onPress={() => buy(p.pkg)}>
+                  <View style={styles.planHead}>
+                    <Text style={styles.planName}>{planName}</Text>
+                    <Text style={styles.planPrice}>
+                      {p.priceString}
+                      {isMonthly && <Text style={styles.planPer}> {t('paywall.perMonth')}</Text>}
+                    </Text>
+                  </View>
+                  <Text style={styles.planDesc}>{planDesc}</Text>
+                  <View style={styles.planBuyBtn}>
+                    <Text style={styles.planBuyText}>{t('common.upgrade')}</Text>
+                  </View>
+                </Pressable>
+              );
+            })}
             <Pressable style={styles.restore} onPress={restore} disabled={loading}>
               <Text style={styles.restoreText}>{t('paywall.restore')}</Text>
             </Pressable>
@@ -104,6 +114,15 @@ const styles = StyleSheet.create({
   proNow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 20 },
   proNowText: { fontSize: 15, fontWeight: '600', color: colors.profit },
   notice: { marginTop: 20, fontSize: 13, color: colors.ink3, textAlign: 'center', lineHeight: 19 },
+
+  planCard: { backgroundColor: colors.surface, borderRadius: 14, borderWidth: 1.5, borderColor: colors.primary, padding: 16 },
+  planHead: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 6 },
+  planName: { fontSize: 16, fontWeight: '700', color: colors.ink1 },
+  planPrice: { fontSize: 18, fontWeight: '700', color: colors.ink1 },
+  planPer: { fontSize: 13, fontWeight: '500', color: colors.ink3 },
+  planDesc: { fontSize: 12, color: colors.ink3, lineHeight: 18, marginBottom: 12 },
+  planBuyBtn: { backgroundColor: colors.primary, borderRadius: 10, paddingVertical: 11, alignItems: 'center' },
+  planBuyText: { color: '#fff', fontSize: 15, fontWeight: '700' },
 
   restore: { alignItems: 'center', paddingVertical: 8 },
   restoreText: { fontSize: 14, color: colors.ink3 },

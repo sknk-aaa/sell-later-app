@@ -9,6 +9,7 @@ export type PlanPackage = {
   productId: string;
   title: string;
   priceString: string;
+  packageType: string; // MONTHLY / ANNUAL / LIFETIME など
   pkg: PurchasesPackage;
 };
 
@@ -67,6 +68,7 @@ function NativePurchaseProvider({ children }: { children: React.ReactNode }) {
               productId: p.product.identifier,
               title: p.product.title,
               priceString: p.product.priceString,
+              packageType: p.packageType,
               pkg: p,
             })),
           );

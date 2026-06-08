@@ -246,6 +246,11 @@ export const ja: Translation = {
     terms: '利用規約',
     privacy: 'プライバシーポリシー',
     subInfo: 'サブスクは、期間終了の24時間以上前に解約しない限り自動更新されます。解約・管理はApp Storeアカウント設定からいつでも可能です。買い切りプランは一度のお支払いです。',
+    perMonth: '/ 月',
+    monthlyName: '月額',
+    lifetimeName: '買い切り',
+    monthlyDesc: '1か月ごとの自動更新サブスクです。Proのすべての機能（広告非表示・写真複数枚・全分析・商品数無制限）が1か月間使え、以降は毎月自動更新されます。',
+    lifetimeDesc: '一度のお支払いで、Proのすべての機能が永続的に使えます。継続課金はありません。',
   },
   onboarding: {
     skip: 'スキップ',
