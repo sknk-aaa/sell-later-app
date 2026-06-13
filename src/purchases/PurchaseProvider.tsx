@@ -1,6 +1,7 @@
 import React from 'react';
 import Purchases, { type CustomerInfo, type PurchasesPackage } from 'react-native-purchases';
 import { isExpoGo } from '@/utils/env';
+import { maybeRequestReview } from '@/utils/review';
 import { useSettingsStore } from '@/stores/useSettingsStore';
 import { ENTITLEMENT_PRO, REVENUECAT_IOS_API_KEY } from './config';
 
@@ -89,7 +90,9 @@ function NativePurchaseProvider({ children }: { children: React.ReactNode }) {
       setLoading(true);
       try {
         const { customerInfo } = await Purchases.purchasePackage(pkg);
-        setPro(hasPro(customerInfo));
+        const nowPro = hasPro(customerInfo);
+        setPro(nowPro);
+        if (nowPro) maybeRequestReview(); // 課金成功直後にレビュー促進
       } catch {
         // ユーザーキャンセル等は無視
       } finally {

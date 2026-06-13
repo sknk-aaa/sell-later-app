@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ModalHeader } from '@/components/headers';
 import { ProductForm, type ProductFormHandle } from '@/components/ProductForm';
 import { Button } from '@/components/ui';
+import { maybeRequestReview } from '@/utils/review';
 import { useTranslation } from '@/i18n';
 import { useItemStore } from '@/stores/useItemStore';
 import { useSettingsStore } from '@/stores/useSettingsStore';
@@ -29,6 +30,8 @@ export default function AddScreen() {
       return;
     }
     await addItem(sub.values, sub.photos);
+    // 登録3件目でレビュー促進（Apple側が頻度制御）
+    if (useItemStore.getState().items.length === 3) maybeRequestReview();
     if (isOnboarding) {
       completeOnboarding();
       router.replace('/home');

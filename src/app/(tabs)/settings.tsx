@@ -1,7 +1,7 @@
 import React from 'react';
 import { Alert, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import * as StoreReview from 'expo-store-review';
 import { useRouter } from 'expo-router';
+import { openWriteReview } from '@/utils/review';
 import { CONTACT_EMAIL } from '@/constants/docs';
 import { Icon, type IconName } from '@/components/Icon';
 import { Card } from '@/components/ui';
@@ -52,10 +52,8 @@ export default function SettingsScreen() {
     );
   };
 
-  const review = async () => {
-    if (await StoreReview.hasAction()) {
-      await StoreReview.requestReview();
-    }
+  const review = () => {
+    openWriteReview();
   };
 
   return (
