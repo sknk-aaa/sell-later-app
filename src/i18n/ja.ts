@@ -110,8 +110,6 @@ export const ja: Translation = {
     totalSales: '想定売上合計',
     totalProfit: '想定利益合計',
     soldProfit: '売却済み利益',
-    soldCount: '売却済み',
-    soldCountUnit: '件',
     byStatus: 'ステータス別',
     byCat: 'カテゴリ別 想定売上',
     recentItems: '最近追加した商品',

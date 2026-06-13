@@ -12,7 +12,14 @@ import { useTranslation } from '@/i18n';
 import { useCurrency } from '@/utils/useCurrency';
 import { categoryLabel } from '@/constants/categories';
 import { useHomeSummary } from '@/stores/selectors';
-import { colors, numFont, shadowCard } from '@/theme/tokens';
+import { colors, numFont, shadowCard, type StatusKind } from '@/theme/tokens';
+
+const STATUS_ICONS: { kind: StatusKind; icon: IconName; color: string; bg: string }[] = [
+  { kind: 'listed', icon: 'tag', color: colors.statusListed, bg: colors.statusListedBg },
+  { kind: 'prep', icon: 'clock', color: colors.statusPrep, bg: colors.statusPrepBg },
+  { kind: 'stored', icon: 'archive', color: colors.statusStored, bg: colors.statusStoredBg },
+  { kind: 'sold', icon: 'checkCircle', color: colors.statusSold, bg: colors.statusSoldBg },
+];
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -36,13 +43,20 @@ export default function HomeScreen() {
             <SummaryStat icon="chartLine" iconBg="rgba(16,185,129,0.12)" iconColor={colors.profit} label={t('home.totalProfit')} value={fmt(summary.expectedProfitTotal)} profit />
           </View>
           <View style={styles.summaryDivider} />
-          <SummaryStat
-            icon="tag"
-            iconBg={colors.primarySoft}
-            iconColor={colors.primary}
-            label={t('home.soldCount')}
-            value={`${summary.statusCounts.sold}${t('home.soldCountUnit')}`}
-          />
+          <View style={styles.statusRow}>
+            {STATUS_ICONS.map((s) => (
+              <View key={s.kind} style={styles.statusCol}>
+                <View style={[styles.statusIcon, { backgroundColor: s.bg }]}>
+                  <Icon name={s.icon} size={20} color={s.color} />
+                </View>
+                <Text style={styles.statusLabel}>{t(`status.${s.kind}`)}</Text>
+                <Text style={styles.statusCount}>
+                  {summary.statusCounts[s.kind]}
+                  <Text style={styles.statusCountUnit}>{t('home.items')}</Text>
+                </Text>
+              </View>
+            ))}
+          </View>
         </Card>
 
         {/* Category breakdown */}
@@ -123,6 +137,13 @@ const styles = StyleSheet.create({
   summaryIcon: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   summaryStatLabel: { fontSize: 11, color: colors.ink3, marginBottom: 2 },
   summaryStatValue: { fontSize: 22, fontWeight: '700', color: colors.ink1, ...numFont },
+
+  statusRow: { flexDirection: 'row', gap: 8 },
+  statusCol: { flex: 1, alignItems: 'center', gap: 6 },
+  statusIcon: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  statusLabel: { fontSize: 11, color: colors.ink3 },
+  statusCount: { fontSize: 16, fontWeight: '700', color: colors.ink1, ...numFont },
+  statusCountUnit: { fontSize: 11, fontWeight: '500', color: colors.ink2 },
 
   donutRow: { flexDirection: 'row', alignItems: 'center', gap: 16 },
   legend: { flex: 1, gap: 10 },
