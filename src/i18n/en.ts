@@ -108,6 +108,8 @@ export const en = {
     totalSales: 'Est. Total Sales',
     totalProfit: 'Est. Total Profit',
     soldProfit: 'Sold Profit',
+    soldCount: 'Items Sold',
+    soldCountUnit: '',
     byStatus: 'By Status',
     byCat: 'Est. Sales by Category',
     recentItems: 'Recently Added',

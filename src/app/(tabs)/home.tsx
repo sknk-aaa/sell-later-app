@@ -12,22 +12,13 @@ import { useTranslation } from '@/i18n';
 import { useCurrency } from '@/utils/useCurrency';
 import { categoryLabel } from '@/constants/categories';
 import { useHomeSummary } from '@/stores/selectors';
-import { colors, numFont, shadowCard, type StatusKind } from '@/theme/tokens';
-
-const STATUS_ICONS: { kind: StatusKind; icon: IconName; color: string }[] = [
-  { kind: 'stored', icon: 'archive', color: '#9CA3AF' },
-  { kind: 'prep', icon: 'clock', color: colors.statusPrep },
-  { kind: 'listed', icon: 'tag', color: colors.statusListed },
-  { kind: 'sold', icon: 'checkCircle', color: colors.statusSold },
-  { kind: 'hold', icon: 'pause', color: colors.statusHold },
-];
+import { colors, numFont, shadowCard } from '@/theme/tokens';
 
 export default function HomeScreen() {
   const router = useRouter();
   const { t } = useTranslation();
   const { fmt } = useCurrency();
   const summary = useHomeSummary();
-  const maxStatus = Math.max(1, ...STATUS_ICONS.map((s) => summary.statusCounts[s.kind]));
 
   return (
     <View style={styles.screen}>
@@ -41,41 +32,17 @@ export default function HomeScreen() {
             <Text style={styles.summarySub}>{t('home.summarySubtitle')}</Text>
           </View>
           <View style={styles.row16}>
-            <SummaryStat icon="tag" iconBg={colors.primarySoft} iconColor={colors.primary} label={t('home.totalSales')} value={fmt(summary.expectedSalesTotal)} />
+            <SummaryStat icon="checkCircle" iconBg={colors.statusSoldBg} iconColor={colors.profit} label={t('home.soldProfit')} value={fmt(summary.soldProfitTotal)} profit />
             <SummaryStat icon="chartLine" iconBg="rgba(16,185,129,0.12)" iconColor={colors.profit} label={t('home.totalProfit')} value={fmt(summary.expectedProfitTotal)} profit />
           </View>
           <View style={styles.summaryDivider} />
           <SummaryStat
-            icon="checkCircle"
-            iconBg={colors.statusSoldBg}
-            iconColor={colors.profit}
-            label={t('home.soldProfit')}
-            value={fmt(summary.soldProfitTotal)}
-            profit
+            icon="tag"
+            iconBg={colors.primarySoft}
+            iconColor={colors.primary}
+            label={t('home.soldCount')}
+            value={`${summary.statusCounts.sold}${t('home.soldCountUnit')}`}
           />
-        </Card>
-
-        {/* By status */}
-        <SectionHead title={t('home.byStatus')} onSeeAll={() => router.push('/list')} />
-        <Card style={{ paddingHorizontal: 12, paddingVertical: 18 }}>
-          <View style={styles.statusRow}>
-            {STATUS_ICONS.map((s) => {
-              const count = summary.statusCounts[s.kind];
-              return (
-                <View key={s.kind} style={styles.statusCol}>
-                  <Icon name={s.icon} size={22} color={s.color} />
-                  <Text style={styles.statusLabel}>{t(`status.${s.kind}`)}</Text>
-                  <Text style={styles.statusCount}>
-                    {count}
-                    <Text style={styles.statusCountUnit}>{t('home.items')}</Text>
-                  </Text>
-                  <View style={styles.statusTrack}>
-                    <View style={[styles.statusFill, { width: `${(count / maxStatus) * 100}%`, backgroundColor: s.color }]} />
-                  </View>
-                </View>
-              );
-            })}
-          </View>
         </Card>
 
         {/* Category breakdown */}
@@ -156,14 +123,6 @@ const styles = StyleSheet.create({
   summaryIcon: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   summaryStatLabel: { fontSize: 11, color: colors.ink3, marginBottom: 2 },
   summaryStatValue: { fontSize: 22, fontWeight: '700', color: colors.ink1, ...numFont },
-
-  statusRow: { flexDirection: 'row', gap: 6 },
-  statusCol: { flex: 1, alignItems: 'center', gap: 6 },
-  statusLabel: { fontSize: 12, color: colors.ink2 },
-  statusCount: { fontSize: 16, fontWeight: '700', color: colors.ink1, ...numFont },
-  statusCountUnit: { fontSize: 11, fontWeight: '500', color: colors.ink2 },
-  statusTrack: { width: '70%', height: 4, backgroundColor: '#EEF0F4', borderRadius: 99, overflow: 'hidden' },
-  statusFill: { height: '100%', borderRadius: 99 },
 
   donutRow: { flexDirection: 'row', alignItems: 'center', gap: 16 },
   legend: { flex: 1, gap: 10 },
