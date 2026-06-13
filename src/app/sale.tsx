@@ -61,7 +61,6 @@ export default function SaleScreen() {
       <FormScrollView
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
-        bottomOffset={24}
         contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 24 }}
       >
         <Text style={styles.caption}>{t('sale.caption', { name: vm.name })}</Text>

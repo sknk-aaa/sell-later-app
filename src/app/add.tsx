@@ -59,7 +59,6 @@ export default function AddScreen() {
       <FormScrollView
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
-        bottomOffset={24}
         contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
       >
         <ProductForm key={formKey} ref={formRef} onRequestPro={() => router.push('/paywall')} />

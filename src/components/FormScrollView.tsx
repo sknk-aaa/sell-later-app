@@ -5,7 +5,7 @@ import { isExpoGo } from '@/utils/env';
 
 type Props = ScrollViewProps & { bottomOffset?: number };
 
-export function FormScrollView({ bottomOffset = 24, ...props }: Props) {
+export function FormScrollView({ bottomOffset = 100, ...props }: Props) {
   if (isExpoGo) {
     return <ScrollView {...props} />;
   }

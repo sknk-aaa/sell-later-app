@@ -45,7 +45,6 @@ export default function EditScreen() {
       <FormScrollView
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
-        bottomOffset={24}
         contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
       >
         <ProductForm
